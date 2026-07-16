@@ -1,9 +1,0 @@
-{
-  "name": "project-estimate-task",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Sutton Flooring's Project-Estimate-Task board — Vercel + Neon edition",
-  "dependencies": {
-    "pg": "^8.11.3"
-  }
-}
