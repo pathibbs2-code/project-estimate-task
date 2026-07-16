@@ -440,13 +440,24 @@
   .job-table-scroll.dragging{ cursor: grabbing; user-select: none; }
   .job-table-head, .job-row{
     display: grid;
-    grid-template-columns: minmax(220px,420px) 100px 110px 110px 110px 110px 120px 115px 110px 130px 120px 130px 60px 60px 110px;
+    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 110px 110px 95px 130px 60px 60px 110px;
     gap: 10px;
     align-items: center;
-    min-width: 1580px;
+    width: 100%;
+    min-width: 1550px;
   }
-  .jc-reviewreq{ display: flex; align-items: center; justify-content: center; }
-  .jc-reviewreq input{ width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+  .jc-ryanreview, .jc-estreview{ display: flex; align-items: center; justify-content: center; }
+  .jc-ryanreview input, .jc-estreview input{ width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+  .add-datetime-btn{
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--medium-soft); color: var(--medium); border: 1px solid var(--medium);
+    white-space: nowrap;
+  }
+  .add-datetime-btn:hover{ filter: brightness(0.96); }
   .job-table-head{
     padding: 8px 16px;
     font-size: 10.5px;
@@ -495,10 +506,18 @@
   .job-row.priority-medium{ background: var(--medium-soft); }
   .job-row.priority-low{ background: var(--low-soft); }
   .jc{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jc-priority, .jc-due, .jc-estdue, .jc-takeoff, .jc-quote, .jc-manual, .jc-proposal, .jc-progress{
+    text-align: center;
+  }
+  .job-table-head .jc-priority, .job-table-head .jc-due, .job-table-head .jc-estdue,
+  .job-table-head .jc-takeoff, .job-table-head .jc-quote, .job-table-head .jc-manual,
+  .job-table-head .jc-proposal, .job-table-head .jc-progress{
+    text-align: center;
+  }
   .jc-priority{ overflow: visible; }
   .jc-task{
     display:flex; align-items:center; gap:8px; white-space:normal;
-    position: sticky; left: 0; z-index: 3;
+    position: relative; z-index: 3;
     background: inherit;
     box-shadow: 2px 0 4px -2px rgba(0,0,0,0.12);
   }
@@ -542,23 +561,31 @@
   .overdue-text{ color: var(--urgent); font-weight: 700; }
   .cell-muted{ color: var(--ink-soft); }
   .progress-pct-sm{ font-family:'IBM Plex Mono',monospace; font-size: 10.5px; color: var(--ink-soft); margin-left: 4px; }
-  .jc-progress{ display:flex; align-items:center; }
+  .jc-progress{ display:flex; align-items:center; justify-content:center; }
   .jc-progress .tape{ flex: 1; }
 
   .job-detail{
     border-top: 1px solid var(--line);
     background: var(--bg);
+    position: relative;
+    width: min(92vw, 1400px);
   }
 
   .job-table-addrow{
     padding: 11px 16px;
+    font-size: 12.5px;
+    border-top: 1px solid var(--line);
+  }
+  .job-table-addrow-link{
+    display: inline-block;
     color: var(--blue);
     font-weight: 600;
-    font-size: 12.5px;
     cursor: pointer;
-    min-width: 1580px;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    border-radius: 6px;
   }
-  .job-table-addrow:hover{ background: var(--blue-soft); }
+  .job-table-addrow-link:hover{ background: var(--blue-soft); }
 
   .empty-state{
     margin: 14px 16px;
@@ -568,7 +595,7 @@
     color: var(--ink-soft);
     font-size: 13px;
     text-align: center;
-    min-width: 1540px;
+    min-width: 1460px;
   }
 
   /* ---------- CARD ---------- */
@@ -970,7 +997,7 @@
     padding: 10px 12px;
   }
   .attachments-head{
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; gap: 12px;
     margin-bottom: 8px;
   }
   .attachments-head label.field-label{
@@ -1078,6 +1105,10 @@
     position: relative;
     box-shadow: inset 0 0 0 3px var(--urgent);
   }
+  .job-row.estimator-flag{
+    position: relative;
+    box-shadow: inset 0 0 0 3px #D4B106;
+  }
 </style>
 </head>
 <body>
@@ -1151,6 +1182,30 @@
     </div>
   </div>
 
+  <div class="date-picker-overlay" id="datetime-picker-overlay" onclick="if(event.target===this) EP.closeDateTimePicker()">
+    <div class="date-picker-box">
+      <div class="date-picker-header">
+        <button type="button" onclick="EP.dtChangeMonth(-1)">&#8249;</button>
+        <span id="dt-month-label">Month Year</span>
+        <button type="button" onclick="EP.dtChangeMonth(1)">&#8250;</button>
+      </div>
+      <div class="date-picker-weekdays">
+        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+      </div>
+      <div class="date-picker-grid" id="dt-grid"></div>
+      <div class="time-picker-selects">
+        <select id="dt-hour"></select>
+        <select id="dt-minute"></select>
+        <select id="dt-ampm"><option value="AM">AM</option><option value="PM">PM</option></select>
+      </div>
+      <div class="date-picker-footer">
+        <button type="button" class="btn ghost small" onclick="EP.dtClear()">Clear</button>
+        <button type="button" class="btn ghost small" onclick="EP.closeDateTimePicker()">Cancel</button>
+        <button type="button" class="btn small" onclick="EP.dtSave()">Save</button>
+      </div>
+    </div>
+  </div>
+
   <div class="date-picker-overlay" id="assign-picker-overlay" onclick="if(event.target===this) EP.closeAssignPicker()">
     <div class="date-picker-box">
       <div class="date-picker-header">
@@ -1191,6 +1246,8 @@
   </div>
 
   <datalist id="customer-datalist"></datalist>
+
+  <input type="file" id="row-file-input" multiple style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.heic,.webp" onchange="EP.handleRowFileInput(this.files); this.value='';">
 
   <div class="add-job-modal-overlay" id="add-job-modal-overlay" onclick="if(event.target===this) EP.closeAddJobModal()">
     <div class="add-job-modal">
@@ -1260,23 +1317,21 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
-            <div class="jc jc-measure">Measure</div>
-            <div class="jc jc-takeoff">Takeoff</div>
-            <div class="jc jc-estimate">Estimate</div>
-            <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-contactreps">Contact Reps</div>
-            <div class="jc jc-submittals">Submittals</div>
-            <div class="jc jc-quote">Quote</div>
-            <div class="jc jc-due">Arrival</div>
+            <div class="jc jc-due">Estimate Time / Date</div>
             <div class="jc jc-estdue">Estimate Due</div>
+            <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-quote">Quote</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-proposal">Proposal</div>
+            <div class="jc jc-ryanreview">Ryan Review</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-residential"></div>
-          <div class="job-table-addrow" onclick="EP.openAddJobModal('residential')">+ Add Job</div>
         </div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span></div>
       </div>
     </div>
     <div class="group-panel" data-cat="commercial">
@@ -1290,23 +1345,21 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
-            <div class="jc jc-measure">Measure</div>
-            <div class="jc jc-takeoff">Takeoff</div>
-            <div class="jc jc-estimate">Estimate</div>
-            <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-contactreps">Contact Reps</div>
-            <div class="jc jc-submittals">Submittals</div>
-            <div class="jc jc-quote">Quote</div>
-            <div class="jc jc-due">Bid Due</div>
+            <div class="jc jc-due">Estimate Time / Date</div>
             <div class="jc jc-estdue">Estimate Due</div>
+            <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-quote">Quote</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-proposal">Proposal</div>
+            <div class="jc jc-ryanreview">Ryan Review</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-commercial"></div>
-          <div class="job-table-addrow" onclick="EP.openAddJobModal('commercial')">+ Add Job</div>
         </div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('commercial')">+ Add Job</span></div>
       </div>
     </div>
     <div class="group-panel" data-cat="task">
@@ -1320,23 +1373,21 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
-            <div class="jc jc-measure">Measure</div>
+            <div class="jc jc-due">Estimate Time / Date</div>
+            <div class="jc jc-estdue">Estimate Due</div>
             <div class="jc jc-takeoff">Takeoff</div>
-            <div class="jc jc-estimate">Estimate</div>
-            <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-contactreps">Contact Reps</div>
-            <div class="jc jc-submittals">Submittals</div>
             <div class="jc jc-quote">Quote</div>
-            <div class="jc jc-due">Task Due</div>
-            <div class="jc jc-reviewreq">Review Requested</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-proposal">Proposal</div>
+            <div class="jc jc-ryanreview">Ryan Review</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-task"></div>
-          <div class="job-table-addrow" onclick="EP.openAddJobModal('task')">+ Add Task</div>
         </div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('task')">+ Add Task</span></div>
       </div>
     </div>
     <div class="group-panel" data-cat="review">
@@ -1350,23 +1401,21 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
-            <div class="jc jc-measure">Measure</div>
+            <div class="jc jc-due">Estimate Time / Date</div>
+            <div class="jc jc-estdue">Estimate Due</div>
             <div class="jc jc-takeoff">Takeoff</div>
-            <div class="jc jc-estimate">Estimate</div>
-            <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-contactreps">Contact Reps</div>
-            <div class="jc jc-submittals">Submittals</div>
             <div class="jc jc-quote">Quote</div>
-            <div class="jc jc-due" id="review-due-label">Due</div>
-            <div class="jc jc-estdue" id="review-col4-label">Estimate Due</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-proposal">Proposal</div>
+            <div class="jc jc-estreview">Estimator Review</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-review"></div>
-          <div class="job-table-addrow" onclick="EP.openAddJobModal('residential')">+ Add Job</div>
         </div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span></div>
       </div>
     </div>
     <div class="group-panel" data-cat="sentComplete">
@@ -1380,23 +1429,21 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
-            <div class="jc jc-measure">Measure</div>
-            <div class="jc jc-takeoff">Takeoff</div>
-            <div class="jc jc-estimate">Estimate</div>
-            <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-contactreps">Contact Reps</div>
-            <div class="jc jc-submittals">Submittals</div>
-            <div class="jc jc-quote">Quote</div>
-            <div class="jc jc-due">Due</div>
+            <div class="jc jc-due">Estimate Time / Date</div>
             <div class="jc jc-estdue">Estimate Due</div>
+            <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-quote">Quote</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-proposal">Proposal</div>
+            <div class="jc jc-ryanreview">Ryan Review</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-sentComplete"></div>
-          <div class="job-table-addrow" onclick="EP.openAddJobModal('residential')">+ Add Job</div>
         </div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span></div>
       </div>
     </div>
   </div>
@@ -1491,6 +1538,7 @@
     contactRepsPricing: "Contact Reps Pricing",
     submittalsComplete: "Submittals Complete",
     quoteComplete: "Quote Complete",
+    proposalComplete: "Proposal",
     estimatorReview: "Estimator Review",
     sentComplete: "Sent Complete"
   };
@@ -1502,7 +1550,7 @@
   // instead of a plain checkbox. Ryan Review, Estimator Review, and Sent Complete
   // stay as plain booleans since they drive automation (moving jobs between
   // categories) and need a simple on/off trigger, not a range of states.
-  var STATUS_FIELD_KEYS = ["measureComplete", "takeoffComplete", "estimateComplete", "manualCreated", "contactRepsPricing", "submittalsComplete", "quoteComplete"];
+  var STATUS_FIELD_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "proposalComplete"];
   var STATUS_OPTIONS = [
     { value: "not_started", label: "Not Started" },
     { value: "in_progress", label: "In Progress" },
@@ -1525,9 +1573,9 @@
     return t;
   }
 
-  var DEFAULT_CHECK_KEYS = ["measureComplete", "takeoffComplete", "estimateComplete", "manualCreated", "ryanReview", "sentComplete"];
-  var RESIDENTIAL_CHECK_KEYS = ["measureComplete", "takeoffComplete", "quoteComplete", "manualCreated", "ryanReview", "estimatorReview", "sentComplete"];
-  var COMMERCIAL_CHECK_KEYS = ["takeoffComplete", "contactRepsPricing", "submittalsComplete", "quoteComplete", "ryanReview", "estimatorReview", "sentComplete"];
+  var DEFAULT_CHECK_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "proposalComplete", "ryanReview", "sentComplete"];
+  var RESIDENTIAL_CHECK_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "proposalComplete", "ryanReview", "estimatorReview", "sentComplete"];
+  var COMMERCIAL_CHECK_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "proposalComplete", "ryanReview", "estimatorReview", "sentComplete"];
   var TASK_CHECK_KEYS = ["estimatorReview", "ryanReview", "sentComplete"];
 
   function checklistFor(t){
@@ -1985,6 +2033,7 @@
       contactRepsPricing: "not_started",
       submittalsComplete: "not_started",
       quoteComplete: "not_started",
+      proposalComplete: "not_started",
       estimatorReview: false,
       sentComplete: false,
       notes: "",
@@ -2436,6 +2485,89 @@
     closeDatePicker();
   }
 
+  // ---------- Combined date + time picker (Estimate Time / Date column) ----------
+  var dtTaskId = null, dtDateField = null, dtTimeField = null;
+  var dtViewYear = null, dtViewMonth = null, dtSelectedDate = '';
+
+  function openDateTimePicker(taskId, dateField, timeField, currentDate, currentTime){
+    dtTaskId = taskId;
+    dtDateField = dateField;
+    dtTimeField = timeField;
+    dtSelectedDate = currentDate || '';
+    var base = currentDate ? new Date(currentDate + 'T00:00:00') : new Date();
+    if (isNaN(base.getTime())) base = new Date();
+    dtViewYear = base.getFullYear();
+    dtViewMonth = base.getMonth();
+    renderDateTimePicker();
+    var hourSel = document.getElementById('dt-hour');
+    var minSel = document.getElementById('dt-minute');
+    var ampmSel = document.getElementById('dt-ampm');
+    var p = parseTime24(currentTime);
+    var hourOpts = '';
+    for (var h = 1; h <= 12; h++){ hourOpts += '<option value="' + h + '">' + h + '</option>'; }
+    hourSel.innerHTML = hourOpts;
+    var minOpts = '';
+    for (var m = 0; m < 60; m += 5){ var mm = (m < 10 ? '0' : '') + m; minOpts += '<option value="' + mm + '">' + mm + '</option>'; }
+    minSel.innerHTML = minOpts;
+    hourSel.value = p.hour12 || '9';
+    minSel.value = p.minute || '00';
+    ampmSel.value = p.ampm || 'AM';
+    document.getElementById('datetime-picker-overlay').classList.add('open');
+  }
+
+  function closeDateTimePicker(){
+    document.getElementById('datetime-picker-overlay').classList.remove('open');
+    dtTaskId = null;
+    dtDateField = null;
+    dtTimeField = null;
+  }
+
+  function dtChangeMonth(delta){
+    dtViewMonth += delta;
+    if (dtViewMonth < 0){ dtViewMonth = 11; dtViewYear--; }
+    if (dtViewMonth > 11){ dtViewMonth = 0; dtViewYear++; }
+    renderDateTimePicker();
+  }
+
+  function renderDateTimePicker(){
+    document.getElementById('dt-month-label').textContent = MONTH_NAMES[dtViewMonth] + ' ' + dtViewYear;
+    var firstDay = new Date(dtViewYear, dtViewMonth, 1).getDay();
+    var daysInMonth = new Date(dtViewYear, dtViewMonth + 1, 0).getDate();
+    var today = todayISO();
+    var html = '';
+    for (var i = 0; i < firstDay; i++){ html += '<span class="dp-day empty"></span>'; }
+    for (var d = 1; d <= daysInMonth; d++){
+      var iso = dtViewYear + '-' + pad2(dtViewMonth + 1) + '-' + pad2(d);
+      var cls = 'dp-day' + (iso === dtSelectedDate ? ' selected' : '') + (iso === today ? ' today' : '');
+      html += '<button type="button" class="' + cls + '" onclick="EP.dtPickDate(\'' + iso + '\')">' + d + '</button>';
+    }
+    document.getElementById('dt-grid').innerHTML = html;
+  }
+
+  function dtPickDate(iso){
+    dtSelectedDate = iso;
+    renderDateTimePicker();
+  }
+
+  function dtSave(){
+    if (!dtTaskId) return;
+    var hour12 = parseInt(document.getElementById('dt-hour').value, 10);
+    var minute = document.getElementById('dt-minute').value;
+    var ampm = document.getElementById('dt-ampm').value;
+    var hour24 = hour12 % 12;
+    if (ampm === 'PM') hour24 += 12;
+    var timeValue = pad2(hour24) + ':' + minute;
+    if (dtDateField) updateField(dtTaskId, dtDateField, dtSelectedDate);
+    if (dtTimeField) updateField(dtTaskId, dtTimeField, timeValue);
+    closeDateTimePicker();
+  }
+
+  function dtClear(){
+    if (dtTaskId && dtDateField) updateField(dtTaskId, dtDateField, '');
+    if (dtTaskId && dtTimeField) updateField(dtTaskId, dtTimeField, '');
+    closeDateTimePicker();
+  }
+
   // ---------- Quick time picker (for row-level Arrival Time editing) ----------
   var tpTaskId = null;
   var tpFieldKey = null;
@@ -2726,6 +2858,16 @@
     uploadFiles(notesEditingTaskId, fileList);
   }
 
+  var rowFileUploadTaskId = null;
+  function triggerRowFileUpload(taskId){
+    rowFileUploadTaskId = taskId;
+    document.getElementById('row-file-input').click();
+  }
+  function handleRowFileInput(fileList){
+    if (rowFileUploadTaskId) uploadFiles(rowFileUploadTaskId, fileList);
+    rowFileUploadTaskId = null;
+  }
+
   function refreshNotesFilesCount(){
     var el = document.getElementById('notes-files-count');
     if (!el || !notesEditingTaskId) return;
@@ -2820,7 +2962,13 @@
 
 
   function toggleExpand(id){
-    expanded[id] = !expanded[id];
+    var opening = !expanded[id];
+    expanded[id] = opening;
+    if (opening){
+      var rowEl = document.querySelector('.job-row[data-id="' + id + '"]');
+      var scrollEl = rowEl ? rowEl.closest('.job-table-scroll') : null;
+      if (scrollEl) scrollEl.scrollLeft = 0;
+    }
     render();
   }
 
@@ -2925,16 +3073,6 @@
     // Submittals/Quote) now live as dropdowns right on the row — showing them
     // again here would just be a redundant second copy of the same controls.
     // Only the automation-driving checkboxes stay in this panel.
-    var checklist = taskFields.filter(function(f){ return !isStatusField(f.key); }).map(function(f){
-      var cid = 'chk-' + t.id + '-' + f.key;
-      return '' +
-        '<div class="check-item">' +
-          '<input type="checkbox" id="' + cid + '" ' + (t[f.key] ? 'checked' : '') +
-            ' onchange="EP.updateField(\'' + t.id + '\',\'' + f.key + '\', this.checked)">' +
-          '<label for="' + cid + '" title="' + f.label + '">' + f.label + '</label>' +
-        '</div>';
-    }).join('');
-
     var deleteBtnClass = "btn small danger" + (confirmingDelete === t.id ? " confirming" : "");
     var deleteBtnLabel = confirmingDelete === t.id ? "Click again to delete" : "Delete";
 
@@ -2977,50 +3115,7 @@
                 ) : '') +
               '</div>'
             ) : '') +
-            '<div class="field"><label>Priority</label>' +
-              '<select onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
-                ['urgent','high','medium','low'].map(function(p){
-                  return '<option value="' + p + '"' + (p===storedPriority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
-                }).join('') +
-              '</select></div>' +
-            '<div class="field"><label>Job type</label>' +
-              '<select onchange="EP.updateField(\'' + t.id + '\',\'jobType\', this.value)">' +
-                '<option value=""' + (t.jobType===''?' selected':'') + '>Not set</option>' +
-                '<option value="residential"' + (t.jobType==='residential'?' selected':'') + '>Residential</option>' +
-                '<option value="commercial"' + (t.jobType==='commercial'?' selected':'') + '>Commercial</option>' +
-                '<option value="task"' + (t.jobType==='task'?' selected':'') + '>Task</option>' +
-              '</select></div>' +
-            '<div class="field"><label>Assign to</label>' +
-              '<select onchange="EP.updateField(\'' + t.id + '\',\'assignTo\', this.value)">' +
-                '<option value=""' + (t.assignTo===''?' selected':'') + '>Unassigned</option>' +
-                ['Pat','Damon','Ryan'].map(function(n){
-                  return '<option value="' + n + '"' + (t.assignTo===n?' selected':'') + '>' + n + '</option>';
-                }).join('') +
-              '</select></div>' +
-            (t.jobType !== 'commercial' && t.jobType !== 'task' ? (
-              '<div class="field"><label>Measure date</label>' +
-                '<input type="text" readonly value="' + escapeHtml(t.measureDate) + '" placeholder="Select a date…" onclick="EP.openDatePicker(\'' + t.id + '\',\'measureDate\',\'' + t.measureDate + '\')"></div>'
-            ) : '') +
-            (t.jobType === 'residential' ? (
-              '<div class="field"><label>Estimate Due</label>' +
-                '<input type="text" readonly value="' + escapeHtml(t.estimateDueDate) + '" placeholder="Select a date…" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')"></div>'
-            ) : '') +
-            (t.jobType !== 'residential' && t.jobType !== 'task' ? (
-              '<div class="field"><label>Bid Due Date</label>' +
-                '<input type="text" readonly value="' + escapeHtml(t.dueDate) + '" placeholder="Select a date…" onclick="EP.openDatePicker(\'' + t.id + '\',\'dueDate\',\'' + t.dueDate + '\')"></div>'
-            ) : '') +
-            (t.jobType !== 'commercial' && t.jobType !== 'task' ? (
-              '<div class="field"><label>Estimate Time Arrival (optional)</label>' +
-                timeSelectHtml('arr', t.id, t.estimateArrivalTime, 'estimateArrivalTime') +
-              '</div>'
-            ) : '') +
-            (t.jobType !== 'residential' && t.jobType !== 'task' ? (
-              '<div class="field"><label>Bid Due Time (optional)</label>' +
-                timeSelectHtml('due', t.id, t.dueTime, 'dueTime') +
-              '</div>'
-            ) : '') +
           '</div>' +
-          '<div class="checklist">' + checklist + '</div>' +
           '<div class="attachments-section">' +
             '<div class="attachments-head">' +
               '<label class="field-label">Documents, images &amp; PDFs</label>' +
@@ -3083,11 +3178,15 @@
     var priority = displayPriority(t);
     var dueTier = dueUrgencyTier(t);
     var isOverdue = t.dueDate && t.dueDate < todayISO() && categoryOf(t) !== 'sentComplete';
-    var isTaskRow = t.jobType === 'task';
 
-    var dueDisplay = t.jobType === 'residential'
-      ? (t.estimateArrivalTime ? formatTime12(t.estimateArrivalTime) : '—')
-      : (t.dueDate || '—');
+    // Residential jobs track their appointment via Measure Date + Estimate
+    // Time Arrival; every other type tracks it via Bid Due Date + Bid Due
+    // Time. Either way it's shown and edited as one unified column now.
+    var dtDateField = t.jobType === 'residential' ? 'measureDate' : 'dueDate';
+    var dtTimeField = t.jobType === 'residential' ? 'estimateArrivalTime' : 'dueTime';
+    var dtDateVal = t[dtDateField] || '';
+    var dtTimeVal = t[dtTimeField] || '';
+    var dtDisplay = (dtDateVal ? dtDateVal : '') + (dtDateVal && dtTimeVal ? ' ' : '') + (dtTimeVal ? formatTime12(dtTimeVal) : '');
 
     var dueFlagHtml =
       (dueTier === 'overdue' ? '<span class="due-flag" title="Past due date">OVERDUE</span>' : '') +
@@ -3100,7 +3199,7 @@
 
     return '' +
     '<div class="job-row-wrap">' +
-      '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + '" data-id="' + t.id + '">' +
+      '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.estimatorReview ? ' estimator-flag' : '') + '" data-id="' + t.id + '">' +
         '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
           '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
           (t.assignTo ? '<span class="owner-avatar" title="' + escapeHtml(t.assignTo) + '" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'' + escapeHtml(t.assignTo) + '\')">' + initialsFor(t.assignTo) + '</span>' : '<span class="owner-avatar empty" title="Unassigned" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'\')">?</span>') +
@@ -3119,23 +3218,26 @@
             }).join('') +
           '</select>' +
         '</div>' +
-        '<div class="jc jc-measure">' + rowStatusCellHtml(t, 'measureComplete') + '</div>' +
-        '<div class="jc jc-takeoff">' + rowStatusCellHtml(t, 'takeoffComplete') + '</div>' +
-        '<div class="jc jc-estimate">' + rowStatusCellHtml(t, 'estimateComplete') + '</div>' +
-        '<div class="jc jc-manual">' + rowStatusCellHtml(t, 'manualCreated') + '</div>' +
-        '<div class="jc jc-contactreps">' + rowStatusCellHtml(t, 'contactRepsPricing') + '</div>' +
-        '<div class="jc jc-submittals">' + rowStatusCellHtml(t, 'submittalsComplete') + '</div>' +
-        '<div class="jc jc-quote">' + rowStatusCellHtml(t, 'quoteComplete') + '</div>' +
         '<div class="jc jc-due">' +
-          (t.jobType === 'residential'
-            ? '<span class="row-quick-edit ' + (isOverdue ? 'overdue-text' : '') + '" onclick="event.stopPropagation(); EP.openTimePicker(\'' + t.id + '\',\'estimateArrivalTime\',\'' + t.estimateArrivalTime + '\')">' + escapeHtml(dueDisplay) + '</span>'
-            : '<span class="row-quick-edit ' + (isOverdue ? 'overdue-text' : '') + '" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'dueDate\',\'' + t.dueDate + '\')">' + escapeHtml(dueDisplay) + '</span>') +
+          (dtDisplay
+            ? '<span class="row-quick-edit ' + (isOverdue ? 'overdue-text' : '') + '" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
+            : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>') +
         '</div>' +
-        (!isTaskRow ? '<div class="jc jc-estdue">' + (t.jobType === 'residential' ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + (t.estimateDueDate ? escapeHtml(t.estimateDueDate) : '<span class="cell-muted">—</span>') + '</span>' : '<span class="cell-muted">—</span>') + '</div>' : '') +
-        (isTaskRow ? '<div class="jc jc-reviewreq" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.ryanReview ? 'checked' : '') + ' title="Review Requested" onchange="EP.updateField(\'' + t.id + '\',\'ryanReview\', this.checked)"></div>' : '') +
+        '<div class="jc jc-estdue">' +
+          (t.estimateDueDate
+            ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
+            : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date / Time</button>') +
+        '</div>' +
+        '<div class="jc jc-takeoff">' + rowStatusCellHtml(t, 'takeoffComplete') + '</div>' +
+        '<div class="jc jc-quote">' + rowStatusCellHtml(t, 'quoteComplete') + '</div>' +
+        '<div class="jc jc-manual">' + rowStatusCellHtml(t, 'manualCreated') + '</div>' +
+        '<div class="jc jc-proposal">' + rowStatusCellHtml(t, 'proposalComplete') + '</div>' +
+        (categoryOf(t) === 'review'
+          ? '<div class="jc jc-estreview" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.estimatorReview ? 'checked' : '') + ' title="Estimator Review — sends this back to the estimator" onchange="EP.updateField(\'' + t.id + '\',\'estimatorReview\', this.checked)"></div>'
+          : '<div class="jc jc-ryanreview" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.ryanReview ? 'checked' : '') + ' title="Ryan Review — sends this to Ryan for review" onchange="EP.updateField(\'' + t.id + '\',\'ryanReview\', this.checked)"></div>') +
         '<div class="jc jc-progress"><div class="tape small"><div class="tape-fill" style="width:' + pct + '%"></div></div><span class="progress-pct-sm">' + pct + '%</span></div>' +
-        '<div class="jc jc-notes"><span class="row-quick-edit" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">' + (noteCount ? '📝' : '<span class="cell-muted">—</span>') + '</span></div>' +
-        '<div class="jc jc-files">' + (fileCount ? ('📎 ' + fileCount) : '<span class="cell-muted">—</span>') + '</div>' +
+        '<div class="jc jc-notes">' + (noteCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">📝</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">+ Add</button>') + '</div>' +
+        '<div class="jc jc-files">' + (fileCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.triggerRowFileUpload(\'' + t.id + '\')">📎 ' + fileCount + '</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.triggerRowFileUpload(\'' + t.id + '\')">+ Add</button>') + '</div>' +
         '<div class="jc jc-updated">' + relativeTime(t.updatedAt) + '</div>' +
       '</div>' +
       (isExpanded ? '<div class="job-detail">' + detailPanelHtml(t) + '</div>' : '') +
@@ -3189,45 +3291,22 @@
     var colReview = document.getElementById('col-review');
     var colSentComplete = document.getElementById('col-sentComplete');
 
-    colResidential.innerHTML = byCat.residential.length
-      ? sortTasks(byCat.residential).map(rowHtml).join('')
-      : emptyHtml("No residential jobs right now.");
-
-    colCommercial.innerHTML = byCat.commercial.length
-      ? sortTasks(byCat.commercial).map(rowHtml).join('')
-      : emptyHtml("No commercial jobs right now.");
-
-    colTask.innerHTML = byCat.task.length
-      ? sortTasks(byCat.task).map(rowHtml).join('')
-      : emptyHtml("No tasks right now.");
-
-    var sortedReview = sortTasks(byCat.review);
-    colReview.innerHTML = sortedReview.length
-      ? sortedReview.map(rowHtml).join('')
-      : emptyHtml("Nothing waiting on Ryan right now.");
-
-    var reviewDueLabel = document.getElementById('review-due-label');
-    var reviewCol4Label = document.getElementById('review-col4-label');
-    if (reviewDueLabel && reviewCol4Label){
-      var topType = sortedReview.length ? sortedReview[0].jobType : '';
-      if (topType === 'residential'){
-        reviewDueLabel.textContent = 'Arrival';
-        reviewCol4Label.textContent = 'Estimate Due';
-      } else if (topType === 'commercial'){
-        reviewDueLabel.textContent = 'Bid Due';
-        reviewCol4Label.textContent = 'Estimate Due';
-      } else if (topType === 'task'){
-        reviewDueLabel.textContent = 'Task Due';
-        reviewCol4Label.textContent = 'Review Requested';
-      } else {
-        reviewDueLabel.textContent = 'Due';
-        reviewCol4Label.textContent = 'Estimate Due';
-      }
+    // Renders a group's rows (each row's detail panel, if expanded, is
+    // built inline as part of rowHtml — see syncAllStickyColumns() below
+    // for how it stays pinned in place during horizontal scrolling).
+    function renderGroup(listId, sortedList, emptyMsg){
+      var listEl = document.getElementById(listId);
+      listEl.innerHTML = sortedList.length ? sortedList.map(rowHtml).join('') : emptyHtml(emptyMsg);
     }
 
-    colSentComplete.innerHTML = byCat.sentComplete.length
-      ? sortTasks(byCat.sentComplete).map(rowHtml).join('')
-      : emptyHtml("Nothing sent or completed yet.");
+    renderGroup('col-residential', sortTasks(byCat.residential), "No residential jobs right now.");
+    renderGroup('col-commercial', sortTasks(byCat.commercial), "No commercial jobs right now.");
+    renderGroup('col-task', sortTasks(byCat.task), "No tasks right now.");
+    var sortedReview = sortTasks(byCat.review);
+    renderGroup('col-review', sortedReview, "Nothing waiting on Ryan right now.");
+    renderGroup('col-sentComplete', sortTasks(byCat.sentComplete), "Nothing sent or completed yet.");
+
+    syncAllStickyColumns();
 
     // Tracker 1: jobs currently on the board (everything not yet Sent Complete),
     // showing their average progress through the checklist.
@@ -3259,6 +3338,8 @@
     toggleGroup: toggleGroup,
     uploadFiles: uploadFiles,
     uploadFilesFromNotes: uploadFilesFromNotes,
+    triggerRowFileUpload: triggerRowFileUpload,
+    handleRowFileInput: handleRowFileInput,
     downloadAttachment: downloadAttachment,
     removeAttachment: removeAttachment,
     pinMapToNotes: pinMapToNotes,
@@ -3288,6 +3369,12 @@
     dpChangeMonth: dpChangeMonth,
     dpPick: dpPick,
     dpClear: dpClear,
+    openDateTimePicker: openDateTimePicker,
+    closeDateTimePicker: closeDateTimePicker,
+    dtChangeMonth: dtChangeMonth,
+    dtPickDate: dtPickDate,
+    dtSave: dtSave,
+    dtClear: dtClear,
     openTimePicker: openTimePicker,
     closeTimePicker: closeTimePicker,
     tpSave: tpSave,
@@ -3325,6 +3412,23 @@
     });
   })();
 
+  // Keeps the job-name column (and any open detail panel) visually pinned
+  // to the left edge as a table scrolls horizontally — done manually via
+  // transform instead of CSS position:sticky, which proved unreliable here
+  // (a slight lag/drift during fast programmatic scrolling). Directly
+  // reading scrollLeft and applying a matching translateX in the same
+  // breath guarantees the two can never fall out of sync.
+  function syncStickyColumns(el){
+    var offset = el.scrollLeft;
+    var t = 'translateX(' + offset + 'px)';
+    var nodes = el.querySelectorAll('.jc-task, .job-detail');
+    for (var i = 0; i < nodes.length; i++){ nodes[i].style.transform = t; }
+  }
+
+  function syncAllStickyColumns(){
+    document.querySelectorAll('.job-table-scroll').forEach(syncStickyColumns);
+  }
+
   // Click-and-drag horizontal scrolling for each group's table — helps
   // desktop mouse users, since a plain mouse has no easy way to scroll
   // sideways otherwise. A genuine click (no real movement) still reaches
@@ -3335,7 +3439,28 @@
   // faster than the browser can repaint, and applying every single event
   // immediately is what causes a jittery, stuttering scroll. Only ever
   // applying the latest pending position once per frame keeps it smooth.
+  //
+  // Touch devices skip this entirely — the browser's own native touch
+  // scrolling already drags-and-settles with proper momentum easing, and
+  // trying to layer this mouse-based logic on top of it would only fight
+  // with that native behavior instead of improving on it.
   (function(){
+    // Keep the sticky column synced on every scroll, regardless of source
+    // (trackpad, scrollbar drag, keyboard) — not just our own custom drag.
+    document.querySelectorAll('.job-table-scroll').forEach(function(el){
+      var scrollSyncRaf = null;
+      el.addEventListener('scroll', function(){
+        if (scrollSyncRaf !== null) return;
+        scrollSyncRaf = requestAnimationFrame(function(){
+          scrollSyncRaf = null;
+          syncStickyColumns(el);
+        });
+      });
+    });
+
+    var isTouchPrimary = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if (isTouchPrimary) return;
+
     document.querySelectorAll('.job-table-scroll').forEach(function(el){
       var isDown = false, hasDragged = false;
       var startX = 0, startScrollX = 0;
@@ -3343,30 +3468,10 @@
 
       function applyPending(){
         rafId = null;
-        if (pendingX !== null){ el.scrollLeft = pendingX; pendingX = null; }
+        if (pendingX !== null){ el.scrollLeft = pendingX; pendingX = null; syncStickyColumns(el); }
       }
 
-      el.addEventListener('mousedown', function(e){
-        var tag = e.target.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
-        isDown = true;
-        hasDragged = false;
-        startX = e.pageX;
-        startScrollX = el.scrollLeft;
-      });
-      window.addEventListener('mousemove', function(e){
-        if (!isDown) return;
-        var deltaX = e.pageX - startX;
-        if (!hasDragged && Math.abs(deltaX) > 4){
-          hasDragged = true;
-          el.classList.add('dragging');
-        }
-        if (hasDragged){
-          pendingX = startScrollX - deltaX;
-          if (rafId === null) rafId = requestAnimationFrame(applyPending);
-        }
-      });
-      window.addEventListener('mouseup', function(){
+      function endDrag(){
         if (rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
         pendingX = null;
         if (isDown && hasDragged){
@@ -3379,15 +3484,45 @@
         isDown = false;
         hasDragged = false;
         el.classList.remove('dragging');
+      }
+
+      el.addEventListener('mousedown', function(e){
+        var tag = e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
+        e.preventDefault(); // stop native text selection from starting at all
+        isDown = true;
+        hasDragged = false;
+        startX = e.pageX;
+        startScrollX = el.scrollLeft;
       });
+      window.addEventListener('mousemove', function(e){
+        if (!isDown) return;
+        // The mouse button can be released outside the browser window
+        // entirely, in which case no mouseup event ever reaches the page —
+        // e.buttons tells us definitively whether it's actually still held,
+        // so this catches that case immediately on the next move instead of
+        // leaving the drag stuck "on" and scrolling forever.
+        if (e.buttons === 0){ endDrag(); return; }
+        var deltaX = e.pageX - startX;
+        if (!hasDragged && Math.abs(deltaX) > 4){
+          hasDragged = true;
+          el.classList.add('dragging');
+        }
+        if (hasDragged){
+          pendingX = startScrollX - deltaX;
+          if (rafId === null) rafId = requestAnimationFrame(applyPending);
+        }
+      });
+      window.addEventListener('mouseup', endDrag);
+      window.addEventListener('blur', endDrag); // e.g. alt-tabbing away mid-drag
       el.addEventListener('mouseleave', function(){
-        el.classList.remove('dragging');
+        if (!isDown) el.classList.remove('dragging');
       });
     });
   })();
 
   document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape'){ closeNotesEditor(); closeAddJobModal(); closeDatePicker(); closeTimePicker(); closeAssignPicker(); closeContactInfoModal(); }
+    if (e.key === 'Escape'){ closeNotesEditor(); closeAddJobModal(); closeDatePicker(); closeTimePicker(); closeAssignPicker(); closeContactInfoModal(); closeDateTimePicker(); }
   });
 
   document.getElementById('add-btn').addEventListener('click', addTask);
