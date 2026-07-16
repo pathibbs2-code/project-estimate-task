@@ -440,7 +440,7 @@
   .job-table-scroll.dragging{ cursor: grabbing; user-select: none; }
   .job-table-head, .job-row{
     display: grid;
-    grid-template-columns: minmax(220px,3fr) 100px 118px 118px 130px 120px 130px 60px 60px 110px;
+    grid-template-columns: minmax(220px,420px) 100px 118px 118px 130px 120px 130px 60px 60px 110px;
     gap: 10px;
     align-items: center;
     min-width: 1050px;
@@ -1076,11 +1076,7 @@
 
   .job-row.due-flash{
     position: relative;
-    animation: due-flash-outline 1s steps(1) infinite;
-  }
-  @keyframes due-flash-outline{
-    0%, 49%{ box-shadow: inset 0 0 0 3px var(--urgent); }
-    50%, 100%{ box-shadow: inset 0 0 0 3px transparent; }
+    box-shadow: inset 0 0 0 3px var(--urgent);
   }
 </style>
 </head>
@@ -3307,11 +3303,10 @@
     });
   })();
 
-  // Click-and-drag scrolling for each group's table — helps desktop mouse
-  // users and touch/TV users alike. Drag mostly sideways to scroll the
-  // table horizontally; drag mostly up/down (including through an expanded
-  // job's content) to scroll the page vertically. A genuine click (no real
-  // movement) still reaches whatever's underneath normally.
+  // Click-and-drag horizontal scrolling for each group's table — helps
+  // desktop mouse users, since a plain mouse has no easy way to scroll
+  // sideways otherwise. A genuine click (no real movement) still reaches
+  // whatever's underneath normally; only an actual drag scrolls.
   //
   // Scroll updates are batched through requestAnimationFrame rather than
   // applied straight from the mousemove handler — mousemove can fire much
@@ -3320,14 +3315,13 @@
   // applying the latest pending position once per frame keeps it smooth.
   (function(){
     document.querySelectorAll('.job-table-scroll').forEach(function(el){
-      var isDown = false, hasDragged = false, mode = null;
-      var startX = 0, startY = 0, startScrollX = 0, startScrollY = 0;
-      var pendingX = null, pendingY = null, rafId = null;
+      var isDown = false, hasDragged = false;
+      var startX = 0, startScrollX = 0;
+      var pendingX = null, rafId = null;
 
       function applyPending(){
         rafId = null;
         if (pendingX !== null){ el.scrollLeft = pendingX; pendingX = null; }
-        if (pendingY !== null){ window.scrollTo(window.scrollX, pendingY); pendingY = null; }
       }
 
       el.addEventListener('mousedown', function(e){
@@ -3335,32 +3329,24 @@
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
         isDown = true;
         hasDragged = false;
-        mode = null;
         startX = e.pageX;
-        startY = e.pageY;
         startScrollX = el.scrollLeft;
-        startScrollY = window.scrollY;
       });
       window.addEventListener('mousemove', function(e){
         if (!isDown) return;
         var deltaX = e.pageX - startX;
-        var deltaY = e.pageY - startY;
-        if (!mode && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)){
-          mode = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
+        if (!hasDragged && Math.abs(deltaX) > 4){
           hasDragged = true;
           el.classList.add('dragging');
         }
-        if (mode === 'horizontal'){
+        if (hasDragged){
           pendingX = startScrollX - deltaX;
-        } else if (mode === 'vertical'){
-          pendingY = startScrollY - deltaY;
+          if (rafId === null) rafId = requestAnimationFrame(applyPending);
         }
-        if (rafId === null) rafId = requestAnimationFrame(applyPending);
       });
       window.addEventListener('mouseup', function(){
         if (rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
         pendingX = null;
-        pendingY = null;
         if (isDown && hasDragged){
           // Swallow the click that would otherwise fire on whatever's under
           // the cursor right after a drag, so dragging never accidentally
@@ -3370,7 +3356,6 @@
         }
         isDown = false;
         hasDragged = false;
-        mode = null;
         el.classList.remove('dragging');
       });
       el.addEventListener('mouseleave', function(){
