@@ -440,10 +440,10 @@
   .job-table-scroll.dragging{ cursor: grabbing; user-select: none; }
   .job-table-head, .job-row{
     display: grid;
-    grid-template-columns: minmax(220px,420px) 100px 118px 118px 130px 120px 130px 60px 60px 110px;
+    grid-template-columns: minmax(220px,420px) 100px 110px 110px 110px 110px 120px 115px 110px 130px 120px 130px 60px 60px 110px;
     gap: 10px;
     align-items: center;
-    min-width: 1050px;
+    min-width: 1580px;
   }
   .jc-reviewreq{ display: flex; align-items: center; justify-content: center; }
   .jc-reviewreq input{ width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
@@ -556,7 +556,7 @@
     font-weight: 600;
     font-size: 12.5px;
     cursor: pointer;
-    min-width: 1050px;
+    min-width: 1580px;
   }
   .job-table-addrow:hover{ background: var(--blue-soft); }
 
@@ -568,7 +568,7 @@
     color: var(--ink-soft);
     font-size: 13px;
     text-align: center;
-    min-width: 1010px;
+    min-width: 1540px;
   }
 
   /* ---------- CARD ---------- */
@@ -1260,7 +1260,12 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
+            <div class="jc jc-measure">Measure</div>
             <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-estimate">Estimate</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-contactreps">Contact Reps</div>
+            <div class="jc jc-submittals">Submittals</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-due">Arrival</div>
             <div class="jc jc-estdue">Estimate Due</div>
@@ -1285,7 +1290,12 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
+            <div class="jc jc-measure">Measure</div>
             <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-estimate">Estimate</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-contactreps">Contact Reps</div>
+            <div class="jc jc-submittals">Submittals</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-due">Bid Due</div>
             <div class="jc jc-estdue">Estimate Due</div>
@@ -1310,7 +1320,12 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
+            <div class="jc jc-measure">Measure</div>
             <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-estimate">Estimate</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-contactreps">Contact Reps</div>
+            <div class="jc jc-submittals">Submittals</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-due">Task Due</div>
             <div class="jc jc-reviewreq">Review Requested</div>
@@ -1335,7 +1350,12 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
+            <div class="jc jc-measure">Measure</div>
             <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-estimate">Estimate</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-contactreps">Contact Reps</div>
+            <div class="jc jc-submittals">Submittals</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-due" id="review-due-label">Due</div>
             <div class="jc jc-estdue" id="review-col4-label">Estimate Due</div>
@@ -1360,7 +1380,12 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
+            <div class="jc jc-measure">Measure</div>
             <div class="jc jc-takeoff">Takeoff</div>
+            <div class="jc jc-estimate">Estimate</div>
+            <div class="jc jc-manual">Manual</div>
+            <div class="jc jc-contactreps">Contact Reps</div>
+            <div class="jc jc-submittals">Submittals</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-due">Due</div>
             <div class="jc jc-estdue">Estimate Due</div>
@@ -2896,20 +2921,12 @@
   function detailPanelHtml(t){
     var storedPriority = t.priority;
     var taskFields = checklistFor(t);
-    var checklist = taskFields.map(function(f){
+    // Status-type checklist items (Measure/Takeoff/Estimate/Manual/Contact Reps/
+    // Submittals/Quote) now live as dropdowns right on the row — showing them
+    // again here would just be a redundant second copy of the same controls.
+    // Only the automation-driving checkboxes stay in this panel.
+    var checklist = taskFields.filter(function(f){ return !isStatusField(f.key); }).map(function(f){
       var cid = 'chk-' + t.id + '-' + f.key;
-      if (isStatusField(f.key)){
-        var curVal = t[f.key] || 'not_started';
-        return '' +
-          '<div class="check-item status-check-item">' +
-            '<label class="status-check-label" title="' + f.label + '">' + f.label + '</label>' +
-            '<select class="status-select status-' + curVal + '" onchange="EP.updateField(\'' + t.id + '\',\'' + f.key + '\', this.value); this.className = \'status-select status-\' + this.value;">' +
-              STATUS_OPTIONS.map(function(o){
-                return '<option value="' + o.value + '"' + (o.value === curVal ? ' selected' : '') + '>' + o.label + '</option>';
-              }).join('') +
-            '</select>' +
-          '</div>';
-      }
       return '' +
         '<div class="check-item">' +
           '<input type="checkbox" id="' + cid + '" ' + (t[f.key] ? 'checked' : '') +
@@ -3102,7 +3119,12 @@
             }).join('') +
           '</select>' +
         '</div>' +
+        '<div class="jc jc-measure">' + rowStatusCellHtml(t, 'measureComplete') + '</div>' +
         '<div class="jc jc-takeoff">' + rowStatusCellHtml(t, 'takeoffComplete') + '</div>' +
+        '<div class="jc jc-estimate">' + rowStatusCellHtml(t, 'estimateComplete') + '</div>' +
+        '<div class="jc jc-manual">' + rowStatusCellHtml(t, 'manualCreated') + '</div>' +
+        '<div class="jc jc-contactreps">' + rowStatusCellHtml(t, 'contactRepsPricing') + '</div>' +
+        '<div class="jc jc-submittals">' + rowStatusCellHtml(t, 'submittalsComplete') + '</div>' +
         '<div class="jc jc-quote">' + rowStatusCellHtml(t, 'quoteComplete') + '</div>' +
         '<div class="jc jc-due">' +
           (t.jobType === 'residential'
