@@ -181,11 +181,12 @@
     border-top: 1px dashed var(--line);
   }
   .overall-wrap-compact{
-    margin-top: 8px;
-    padding-top: 8px;
+    margin-top: 4px;
+    padding-top: 4px;
   }
-  .overall-wrap-compact .tape{ height: 10px; }
-  .overall-wrap-compact .overall-head{ margin-bottom: 4px; font-size: 11px; }
+  .overall-wrap-compact .tape{ height: 6px; }
+  .overall-wrap-compact .overall-head{ margin-bottom: 2px; font-size: 9px; }
+  .overall-wrap-compact .overall-head b{ font-size: 9px; }
   .overall-head{
     display:flex; justify-content:space-between; align-items:baseline;
     font-size:12px; color: var(--ink-soft); margin-bottom:7px;
@@ -210,6 +211,7 @@
     transition: width .35s ease;
   }
   .tape-fill.complete-fill{ background: var(--low); }
+  .tape-fill.review-fill{ background: var(--high); }
   .tape.small{ height:10px; border-radius:3px; }
 
   /* ---------- ADD TASK BAR ---------- */
@@ -490,6 +492,7 @@
     flex-direction: column;
     gap: 16px;
   }
+  .mobile-scroll-hint{ display: none; }
   @media (max-width: 640px){
     body{ background-attachment: scroll; }
     .app{ padding: 12px 12px 50px; }
@@ -502,6 +505,34 @@
     .add-job-modal-overlay, .notes-modal-overlay{ padding: 10px; }
     .card-body-inner{ padding: 10px; }
     .mobile-quick-status{ display: flex; }
+
+    /* A phone screen can't fit the full desktop table no matter what, but
+       it doesn't need to try to fit the desktop MINIMUM either — these are
+       meaningfully smaller so there's less to scroll through to reach a
+       button, while staying big enough to tap comfortably. */
+    :root{
+      --col-name: 260px;
+      --col-priority: 78px;
+      --col-due: 128px;
+      --col-estdue: 100px;
+      --col-status: 88px;
+      --col-sentto: 105px;
+      --col-checkbox: 78px;
+      --col-progress: 100px;
+      --font-table-head: 9.5px;
+      --font-table-row: 11.5px;
+    }
+    .job-table-scroll{ position: relative; }
+    .mobile-scroll-hint{
+      display: block;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      color: var(--blue);
+      background: var(--blue-soft);
+      padding: 4px 10px;
+      text-align: center;
+    }
   }
 
   .mobile-quick-status{
@@ -579,28 +610,42 @@
     cursor: grab;
   }
   .job-table-scroll.dragging{ cursor: grabbing; user-select: none; }
+  .job-table-head, .job-row, .job-row-wrap{
+    width: 100%;
+    min-width: 1465px;
+  }
   .job-table-head, .job-row{
     display: grid;
     grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
     gap: 10px;
     align-items: center;
-    width: 100%;
-    min-width: 1465px;
+  }
+  .group-panel[data-cat="review"] .job-table-head,
+  .group-panel[data-cat="review"] .job-row,
+  .group-panel[data-cat="review"] .job-row-wrap{
+    min-width: 1585px;
   }
   .group-panel[data-cat="review"] .job-table-head,
   .group-panel[data-cat="review"] .job-row{
     grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-status) var(--col-sentto) var(--col-checkbox) var(--col-progress) 60px 60px 110px;
-    min-width: 1585px;
+  }
+  .group-panel[data-cat="task"] .job-table-head,
+  .group-panel[data-cat="task"] .job-row,
+  .group-panel[data-cat="task"] .job-row-wrap{
+    min-width: 1065px;
   }
   .group-panel[data-cat="task"] .job-table-head,
   .group-panel[data-cat="task"] .job-row{
     grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-sentto) var(--col-progress) 60px 60px 110px;
-    min-width: 1065px;
+  }
+  .group-panel[data-cat="residential"] .job-table-head,
+  .group-panel[data-cat="residential"] .job-row,
+  .group-panel[data-cat="residential"] .job-row-wrap{
+    min-width: 1360px;
   }
   .group-panel[data-cat="residential"] .job-table-head,
   .group-panel[data-cat="residential"] .job-row{
     grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
-    min-width: 1360px;
   }
   .jc-sentto{ display: flex; align-items: center; justify-content: center; }
   .jc-submitted{ display: flex; align-items: center; justify-content: center; }
@@ -627,7 +672,7 @@
     background: var(--bg);
     border-bottom: 1px solid var(--line);
   }
-  .job-row-wrap{ border-bottom: 1px solid var(--line); width: max-content; min-width: 100%; }
+  .job-row-wrap{ border-bottom: 1px solid var(--line); }
   .job-row-wrap.priority-urgent{ background: var(--urgent-soft); }
   .job-row-wrap.priority-high{ background: var(--high-soft); }
   .job-row-wrap.priority-medium{ background: var(--medium-soft); }
@@ -1339,6 +1384,14 @@
 
     <div class="overall-wrap overall-wrap-compact">
       <div class="overall-head">
+        <span id="review-count-label">0 jobs in Ryan Review</span>
+        <b id="review-count-pct">0%</b>
+      </div>
+      <div class="tape"><div class="tape-fill review-fill" id="review-count-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="overall-wrap overall-wrap-compact">
+      <div class="overall-head">
         <span id="completed-label">0 jobs submitted</span>
         <b id="completed-pct">0%</b>
       </div>
@@ -1529,6 +1582,7 @@
         <span class="badge-count" id="count-residential">0</span><span class="group-header-spacer"></span>
       </div>
       <div class="group-body" id="groupbody-residential">
+        <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
         <div class="job-table-scroll">
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
@@ -1555,6 +1609,7 @@
         <span class="badge-count" id="count-commercial">0</span><span class="group-header-spacer"></span>
       </div>
       <div class="group-body" id="groupbody-commercial">
+        <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
         <div class="job-table-scroll">
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
@@ -1582,6 +1637,7 @@
         <span class="badge-count" id="count-task">0</span><span class="group-header-spacer"></span>
       </div>
       <div class="group-body" id="groupbody-task">
+        <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
         <div class="job-table-scroll">
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
@@ -1605,6 +1661,7 @@
         <span class="badge-count" id="count-review">0</span><span class="group-header-spacer"></span>
       </div>
       <div class="group-body" id="groupbody-review">
+        <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
         <div class="job-table-scroll">
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
@@ -1633,6 +1690,7 @@
         <span class="badge-count" id="count-sentComplete">0</span><span class="group-header-spacer"></span>
       </div>
       <div class="group-body" id="groupbody-sentComplete">
+        <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
         <div class="job-table-scroll">
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
@@ -3859,6 +3917,16 @@
     document.getElementById('overall-fill').style.width = activePct + '%';
     document.getElementById('overall-label').textContent =
       activeCount + (activeCount === 1 ? ' job on the board' : ' jobs on the board');
+
+    // Tracker 1b: how many of those active jobs are currently sitting in
+    // Ryan Review — kept up top so it's visible without scrolling down to
+    // that table.
+    var reviewCount = byCat.review.length;
+    var reviewPct = activeCount ? Math.round((reviewCount / activeCount) * 100) : 0;
+    document.getElementById('review-count-pct').textContent = reviewPct + '%';
+    document.getElementById('review-count-fill').style.width = reviewPct + '%';
+    document.getElementById('review-count-label').textContent =
+      reviewCount + (reviewCount === 1 ? ' job in Ryan Review' : ' jobs in Ryan Review');
 
     // Tracker 2: completed projects, as a share of every job ever entered.
     var total = tasks.length;
