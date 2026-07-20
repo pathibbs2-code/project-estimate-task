@@ -25,6 +25,45 @@
     --low: #5C8368;
     --low-soft: #E7EFE8;
     --shadow: 0 1px 2px rgba(28,43,51,0.06), 0 4px 14px rgba(28,43,51,0.05);
+
+    /* Column widths — used by every table's grid-template-columns. Kept as
+       plain fixed pixel values (never fr/auto) because the header and each
+       row are technically separate grid instances; anything content-based
+       can resolve to a different width per instance and break alignment.
+       Responsiveness instead comes from swapping these to larger fixed
+       values at wider breakpoints below — same guarantee, just scaled. */
+    --col-name: 380px;
+    --col-priority: 100px;
+    --col-due: 155px;
+    --col-estdue: 125px;
+    --col-status: 110px;
+    --col-sentto: 130px;
+    --col-checkbox: 95px;
+    --col-progress: 130px;
+  }
+  @media (min-width: 1900px){
+    :root{
+      --col-name: 440px;
+      --col-priority: 115px;
+      --col-due: 180px;
+      --col-estdue: 145px;
+      --col-status: 125px;
+      --col-sentto: 150px;
+      --col-checkbox: 110px;
+      --col-progress: 150px;
+    }
+  }
+  @media (min-width: 2500px){
+    :root{
+      --col-name: 500px;
+      --col-priority: 130px;
+      --col-due: 205px;
+      --col-estdue: 165px;
+      --col-status: 145px;
+      --col-sentto: 170px;
+      --col-checkbox: 125px;
+      --col-progress: 170px;
+    }
   }
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
@@ -550,7 +589,7 @@
   .job-table-scroll.dragging{ cursor: grabbing; user-select: none; }
   .job-table-head, .job-row{
     display: grid;
-    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 110px 130px 130px 60px 60px 110px;
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
     gap: 10px;
     align-items: center;
     width: 100%;
@@ -558,17 +597,17 @@
   }
   .group-panel[data-cat="review"] .job-table-head,
   .group-panel[data-cat="review"] .job-row{
-    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 110px 130px 95px 130px 60px 60px 110px;
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-status) var(--col-sentto) var(--col-checkbox) var(--col-progress) 60px 60px 110px;
     min-width: 1585px;
   }
   .group-panel[data-cat="task"] .job-table-head,
   .group-panel[data-cat="task"] .job-row{
-    grid-template-columns: minmax(220px,420px) 100px 155px 130px 130px 60px 60px 110px;
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-sentto) var(--col-progress) 60px 60px 110px;
     min-width: 1065px;
   }
   .group-panel[data-cat="residential"] .job-table-head,
   .group-panel[data-cat="residential"] .job-row{
-    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 130px 130px 60px 60px 110px;
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
     min-width: 1360px;
   }
   .jc-sentto{ display: flex; align-items: center; justify-content: center; }
@@ -1268,10 +1307,6 @@
     position: relative;
     box-shadow: inset 0 0 0 3px var(--urgent);
   }
-  .job-row-wrap.review-flag-yellow{ background: #F5FF3D !important; }
-  .job-row-wrap.review-flag-yellow .jc-task{ background: #F5FF3D !important; }
-  .job-row-wrap.review-flag-blue{ background: #3DE0FF !important; }
-  .job-row-wrap.review-flag-blue .jc-task{ background: #3DE0FF !important; }
 </style>
 </head>
 <body>
@@ -3647,7 +3682,7 @@
     // Job, Priority, Task Due, Ryan Review, Progress, Notes, Files, Updated.
     if (categoryOf(t) === 'task'){
       return '' +
-      '<div class="job-row-wrap priority-' + priority + (t.estimatorReview ? ' review-flag-yellow' : (t.ryanReview ? ' review-flag-blue' : '')) + '">' +
+      '<div class="job-row-wrap priority-' + priority + '">' +
         '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + '" data-id="' + t.id + '">' +
           '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
             moveButtonsHtml(t) +
@@ -3683,7 +3718,7 @@
     }
 
     return '' +
-    '<div class="job-row-wrap priority-' + priority + (t.estimatorReview ? ' review-flag-yellow' : (t.ryanReview ? ' review-flag-blue' : '')) + '">' +
+    '<div class="job-row-wrap priority-' + priority + '">' +
       '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + '" data-id="' + t.id + '">' +
         '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
           moveButtonsHtml(t) +
