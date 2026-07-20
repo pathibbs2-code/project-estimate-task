@@ -26,44 +26,27 @@
     --low-soft: #E7EFE8;
     --shadow: 0 1px 2px rgba(28,43,51,0.06), 0 4px 14px rgba(28,43,51,0.05);
 
-    /* Column widths — used by every table's grid-template-columns. Kept as
-       plain fixed pixel values (never fr/auto) because the header and each
-       row are technically separate grid instances; anything content-based
-       can resolve to a different width per instance and break alignment.
-       Responsiveness instead comes from swapping these to larger fixed
-       values at wider breakpoints below — same guarantee, just scaled. */
-    --col-name: 380px;
-    --col-priority: 100px;
-    --col-due: 155px;
-    --col-estdue: 125px;
-    --col-status: 110px;
-    --col-sentto: 130px;
-    --col-checkbox: 95px;
-    --col-progress: 130px;
-  }
-  @media (min-width: 1900px){
-    :root{
-      --col-name: 440px;
-      --col-priority: 115px;
-      --col-due: 180px;
-      --col-estdue: 145px;
-      --col-status: 125px;
-      --col-sentto: 150px;
-      --col-checkbox: 110px;
-      --col-progress: 150px;
-    }
-  }
-  @media (min-width: 2500px){
-    :root{
-      --col-name: 500px;
-      --col-priority: 130px;
-      --col-due: 205px;
-      --col-estdue: 165px;
-      --col-status: 145px;
-      --col-sentto: 170px;
-      --col-checkbox: 125px;
-      --col-progress: 170px;
-    }
+    /* Column widths — used by every table's grid-template-columns. Each is
+       a clamp() that resolves to exactly one pixel value at any given
+       viewport width — never a flexible range — which is what keeps every
+       table's header and rows (technically separate grid instances)
+       perfectly aligned. The values scale continuously between ~1400px and
+       ~3000px of viewport width, then hold steady at the floor/ceiling
+       outside that range, so the whole layout genuinely responds to
+       whatever screen it's on instead of just jumping between fixed steps. */
+    --col-name: clamp(380px, 275px + 7.5vw, 500px);
+    --col-priority: clamp(100px, 73.75px + 1.875vw, 130px);
+    --col-due: clamp(155px, 111.25px + 3.125vw, 205px);
+    --col-estdue: clamp(125px, 90px + 2.5vw, 165px);
+    --col-status: clamp(110px, 79.375px + 2.1875vw, 145px);
+    --col-sentto: clamp(130px, 95px + 2.5vw, 170px);
+    --col-checkbox: clamp(95px, 68.75px + 1.875vw, 125px);
+    --col-progress: clamp(130px, 95px + 2.5vw, 170px);
+
+    /* Table text scales fluidly too, same technique, so type stays
+       proportionate to the columns as the screen size changes. */
+    --font-table-head: clamp(10.5px, 8.3125px + 0.15625vw, 13px);
+    --font-table-row: clamp(12.5px, 9.875px + 0.1875vw, 15.5px);
   }
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
@@ -627,7 +610,7 @@
   .add-datetime-btn:hover{ filter: brightness(0.96); }
   .job-table-head{
     padding: 8px 16px;
-    font-size: 10.5px;
+    font-size: var(--font-table-head);
     text-transform: uppercase;
     letter-spacing: .05em;
     font-weight: 700;
@@ -643,7 +626,7 @@
   .job-row-wrap:last-child{ border-bottom: none; }
   .job-row{
     padding: 10px 16px;
-    font-size: 12.5px;
+    font-size: var(--font-table-row);
   }
   .job-row:hover{ filter: brightness(0.96); }
   .jc-task{ cursor: pointer; }
@@ -690,6 +673,10 @@
     text-align: center;
   }
   .jc-priority{ overflow: visible; }
+  /* When the job currently at the top of Ryan Review / Job Submitted is a
+     type that has no Takeoff step (Residential), the whole column hides —
+     both the header and every row's cell — so nothing shifts out of place. */
+  .group-panel.hide-takeoff .jc-takeoff{ display: none; }
   .jc-task{
     display:flex; align-items:center; gap:8px; white-space:normal;
     position: sticky; left: 0; z-index: 30;
@@ -1307,6 +1294,15 @@
     position: relative;
     box-shadow: inset 0 0 0 3px var(--urgent);
   }
+  .job-row.just-reassigned{
+    position: relative;
+    box-shadow: inset 0 0 0 3px #FF7A1A;
+  }
+  .owner-avatar.extra-avatar{
+    color: #fff;
+    margin-left: -8px;
+    border: 2px solid #fff;
+  }
 </style>
 </head>
 <body>
@@ -1556,7 +1552,7 @@
             <div class="jc jc-priority">Priority</div>
             <div class="jc jc-due">Bid Due / Time</div>
             <div class="jc jc-takeoff">Takeoff</div>
-            <div class="jc jc-contactreps">Contact Reps Pricing</div>
+            <div class="jc jc-contactreps">Rep Price</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
             <div class="jc jc-sentto">Sent To</div>
@@ -1747,7 +1743,7 @@
     estimateComplete: "Estimate Complete",
     manualCreated: "Manual Created",
     ryanReview: "Ryan Review",
-    contactRepsPricing: "Contact Reps Pricing",
+    contactRepsPricing: "Rep Price",
     submittalsComplete: "Submittals Complete",
     quoteComplete: "Quote Complete",
     proposalComplete: "Proposal",
@@ -2162,6 +2158,8 @@
       email: email || "",
       jobType: jobType || "",
       assignTo: assignTo || "",
+      additionalAssignees: [],
+      justReassigned: false,
       sentTo: "",
       measureDate: "",
       dueDate: "",
@@ -2908,9 +2906,16 @@
         t.ryanReview = true;
         t.estimatorReview = false;
         t.sentComplete = false;
-      } else if (t.assignTo && value.toLowerCase() === t.assignTo.toLowerCase()){
-        // Sending it to whoever it's actually assigned to means sending it
-        // back to them directly — i.e. back to the table it came from.
+      } else if (value === 'pat' || value === 'damon' || value === 'ryan'){
+        // Sending it to one of the team adds them as an assignee alongside
+        // whoever's already on the job (rather than replacing them), and
+        // sends it back to whichever table it originally belongs in.
+        var personName = value.charAt(0).toUpperCase() + value.slice(1);
+        if (!t.additionalAssignees) t.additionalAssignees = [];
+        if (t.assignTo !== personName && t.additionalAssignees.indexOf(personName) === -1){
+          t.additionalAssignees.push(personName);
+          t.justReassigned = true;
+        }
         t.ryanReview = false;
         t.estimatorReview = false;
         t.sentComplete = false;
@@ -3164,6 +3169,8 @@
     }
     expanded[id] = opening;
     if (opening){
+      var t = tasks.find(function(x){ return x.id === id; });
+      if (t && t.justReassigned){ t.justReassigned = false; scheduleSave(); }
       var rowEl = document.querySelector('.job-row[data-id="' + id + '"]');
       var scrollEl = rowEl ? rowEl.closest('.job-table-scroll') : null;
       if (scrollEl) scrollEl.scrollLeft = 0;
@@ -3427,7 +3434,7 @@
           ? '<span class="row-quick-edit" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
           : '<button type="button" class="add-datetime-btn" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>']);
       if (cat !== 'residential') rows.push(['Takeoff', rowStatusCellHtml(t, 'takeoffComplete')]);
-      if (cat === 'commercial') rows.push(['Contact Reps Pricing', rowStatusCellHtml(t, 'contactRepsPricing')]);
+      if (cat === 'commercial') rows.push(['Rep Price', rowStatusCellHtml(t, 'contactRepsPricing')]);
       rows.push(['Quote', rowStatusCellHtml(t, 'quoteComplete')]);
       rows.push(['Manual', rowStatusCellHtml(t, 'manualCreated')]);
     }
@@ -3543,6 +3550,36 @@
     return name.trim().charAt(0).toUpperCase();
   }
 
+  // Each team member gets their own consistent color, so a second (or
+  // third) assignee on a job is visually distinct from the first at a glance.
+  var PERSON_COLOR = { Pat: '#2E5C73', Damon: '#8862C4', Ryan: '#2E8B8B' };
+  function personColor(name){ return PERSON_COLOR[name] || '#56666E'; }
+
+  // Renders the primary assignee (click to reassign, same as always) plus
+  // any additional people this job was sent to on top of that — each in
+  // their own color so it's clear at a glance who all is on a job. The row
+  // itself gets a neon orange outline when someone's just been added this
+  // way, until it's opened and the alert is acknowledged.
+  function avatarGroupHtml(t){
+    var extra = t.additionalAssignees || [];
+    var html = t.assignTo
+      ? '<span class="owner-avatar" style="border:2px solid ' + personColor(t.assignTo) + ';" title="' + escapeHtml(t.assignTo) + '" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'' + escapeHtml(t.assignTo) + '\')">' + initialsFor(t.assignTo) + '</span>'
+      : '<span class="owner-avatar empty" title="Unassigned" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'\')">?</span>';
+    extra.forEach(function(name){
+      html += '<span class="owner-avatar extra-avatar" style="background:' + personColor(name) + ';" title="' + escapeHtml(name) + ' (also assigned) — click to remove" onclick="event.stopPropagation(); EP.removeAdditionalAssignee(\'' + t.id + '\',\'' + escapeHtml(name) + '\')">' + initialsFor(name) + '</span>';
+    });
+    return html;
+  }
+
+  function removeAdditionalAssignee(taskId, name){
+    var t = tasks.find(function(x){ return x.id === taskId; });
+    if (!t || !t.additionalAssignees) return;
+    t.additionalAssignees = t.additionalAssignees.filter(function(n){ return n !== name; });
+    t.updatedAt = Date.now();
+    scheduleSave();
+    render();
+  }
+
   // Renders a compact status dropdown for a single status field, right on the
   // row — but only if that field is actually part of this job's checklist
   // (e.g. Quote Complete isn't a step for Task-type jobs).
@@ -3611,11 +3648,11 @@
     if (categoryOf(t) === 'task'){
       return '' +
       '<div class="job-row-wrap priority-' + priority + '">' +
-        '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + '" data-id="' + t.id + '">' +
+        '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + '" data-id="' + t.id + '">' +
           '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
             moveButtonsHtml(t) +
             '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
-            (t.assignTo ? '<span class="owner-avatar" title="' + escapeHtml(t.assignTo) + '" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'' + escapeHtml(t.assignTo) + '\')">' + initialsFor(t.assignTo) + '</span>' : '<span class="owner-avatar empty" title="Unassigned" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'\')">?</span>') +
+            avatarGroupHtml(t) +
             '<span class="job-task-text">' +
               '<span class="job-task-name-row">' +
                 '<span class="job-task-name' + (t.customer ? '' : ' placeholder') + '">' + (t.customer ? escapeHtml(t.customer) : 'Untitled job') + '</span>' +
@@ -3647,11 +3684,11 @@
 
     return '' +
     '<div class="job-row-wrap priority-' + priority + '">' +
-      '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + '" data-id="' + t.id + '">' +
+      '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + '" data-id="' + t.id + '">' +
         '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
           moveButtonsHtml(t) +
           '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
-          (t.assignTo ? '<span class="owner-avatar" title="' + escapeHtml(t.assignTo) + '" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'' + escapeHtml(t.assignTo) + '\')">' + initialsFor(t.assignTo) + '</span>' : '<span class="owner-avatar empty" title="Unassigned" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'\')">?</span>') +
+          avatarGroupHtml(t) +
           '<span class="job-task-text">' +
             '<span class="job-task-name-row">' +
               '<span class="job-task-name' + (t.customer ? '' : ' placeholder') + '">' + (t.customer ? escapeHtml(t.customer) : 'Untitled job') + '</span>' +
@@ -3761,11 +3798,13 @@
     renderGroup('col-review', sortedReview, "Nothing waiting on Ryan right now.");
 
     // Ryan Review's table holds a mix of job types, so its "due" columns
-    // relabel themselves to match whichever job is most relevant right now:
-    // the one currently open, or otherwise whichever is at the top of the list.
+    // relabel themselves — and Takeoff hides entirely — to match whichever
+    // job is most relevant right now: the one currently open, or otherwise
+    // whichever is at the top of the list.
     (function(){
       var dueLabel = document.getElementById('review-due-label');
       var estdueLabel = document.getElementById('review-estdue-label');
+      var panel = document.querySelector('.group-panel[data-cat="review"]');
       if (!dueLabel || !estdueLabel) return;
       var focusJob = sortedReview.find(function(t){ return expanded[t.id]; }) || sortedReview[0];
       var jt = focusJob ? focusJob.jobType : '';
@@ -3782,9 +3821,21 @@
         dueLabel.textContent = 'Estimate Time / Date';
         estdueLabel.textContent = 'Estimate Due';
       }
+      if (panel) panel.classList.toggle('hide-takeoff', jt === 'residential');
     })();
 
-    renderGroup('col-sentComplete', sortTasks(byCat.sentComplete), "Nothing submitted yet.");
+    var sortedSentComplete = sortTasks(byCat.sentComplete);
+    renderGroup('col-sentComplete', sortedSentComplete, "Nothing submitted yet.");
+
+    // Job Submitted is the same mix-of-job-types situation — Takeoff hides
+    // when the top (or currently open) job is Residential.
+    (function(){
+      var panel = document.querySelector('.group-panel[data-cat="sentComplete"]');
+      if (!panel) return;
+      var focusJob = sortedSentComplete.find(function(t){ return expanded[t.id]; }) || sortedSentComplete[0];
+      var jt = focusJob ? focusJob.jobType : '';
+      panel.classList.toggle('hide-takeoff', jt === 'residential');
+    })();
 
     // Tracker 1: jobs currently on the board (everything not yet Sent Complete),
     // showing their average progress through the checklist.
@@ -3864,6 +3915,7 @@
     tpSave: tpSave,
     tpClear: tpClear,
     openAssignPicker: openAssignPicker,
+    removeAdditionalAssignee: removeAdditionalAssignee,
     closeAssignPicker: closeAssignPicker,
     pickAssignee: pickAssignee,
     openContactInfoModal: openContactInfoModal,
