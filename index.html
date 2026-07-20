@@ -49,6 +49,14 @@
     --font-table-row: clamp(12.5px, 9.875px + 0.1875vw, 15.5px);
   }
   *{ box-sizing: border-box; }
+  /* Removes the delay/ambiguity mobile browsers otherwise add to a tap
+     while deciding whether it's the start of a scroll — critical for
+     anything tappable that lives inside a horizontally scrolling table. */
+  button, select, .owner-avatar, .jc-task, .row-quick-edit, .add-datetime-btn,
+  .job-chevron, .job-move-buttons, input[type="checkbox"], .group-header,
+  .job-table-addrow-link, .mqs-value{
+    touch-action: manipulation;
+  }
   html,body{ margin:0; padding:0; }
   body{
     background: var(--bg);
@@ -518,6 +526,7 @@
     flex: none;
   }
   .mqs-value{ flex: none; }
+  .mqs-avatars{ display: flex; align-items: center; }
   .mqs-value input[type="checkbox"]{ width: 18px; height: 18px; accent-color: var(--blue); cursor: pointer; }
 
   .group-panel{
@@ -629,7 +638,7 @@
     font-size: var(--font-table-row);
   }
   .job-row:hover{ filter: brightness(0.96); }
-  .jc-task{ cursor: pointer; }
+  .jc-task{ cursor: pointer; touch-action: manipulation; }
   .row-quick-select{
     border: none;
     background: transparent;
@@ -3416,6 +3425,8 @@
     var dueLabel = t.jobType === 'residential' ? 'Arrival' : (isTaskCat ? 'Task Due' : 'Bid Due / Time');
 
     var rows = [];
+    rows.push(['Assigned To', '<span class="mqs-avatars">' + avatarGroupHtml(t) + '</span>']);
+
     rows.push(['Priority',
       '<select class="row-quick-select badge-select ' + priority + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
         ['urgent','high','medium','low'].map(function(p){
