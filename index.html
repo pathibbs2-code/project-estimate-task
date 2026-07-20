@@ -48,9 +48,9 @@
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 14px;
-    padding: 20px 24px;
+    padding: 18px 24px 16px;
     box-shadow: var(--shadow);
-    margin-bottom: 18px;
+    margin-bottom: 14px;
   }
   .header-top{
     display:flex;
@@ -130,13 +130,6 @@
     letter-spacing: .02em;
   }
   .header-minimize-btn:hover{ background: var(--blue-soft); color: var(--blue); }
-  .app.board-minimized .overall-wrap,
-  .app.board-minimized .add-job-trigger-row,
-  .app.board-minimized #board,
-  .app.board-minimized #unclassified-warning{
-    display: none;
-  }
-  .app.board-minimized .header-minimize-btn .min-chevron{ transform: rotate(-90deg); display:inline-block; }
   .page-heading-text h1{
     font-family: 'Archivo', sans-serif;
     font-weight: 800;
@@ -157,6 +150,12 @@
     padding-top: 14px;
     border-top: 1px dashed var(--line);
   }
+  .overall-wrap-compact{
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .overall-wrap-compact .tape{ height: 10px; }
+  .overall-wrap-compact .overall-head{ margin-bottom: 4px; font-size: 11px; }
   .overall-head{
     display:flex; justify-content:space-between; align-items:baseline;
     font-size:12px; color: var(--ink-soft); margin-bottom:7px;
@@ -551,24 +550,30 @@
   .job-table-scroll.dragging{ cursor: grabbing; user-select: none; }
   .job-table-head, .job-row{
     display: grid;
-    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 110px 110px 95px 130px 60px 60px 110px;
+    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 110px 130px 130px 60px 60px 110px;
     gap: 10px;
     align-items: center;
     width: 100%;
-    min-width: 1550px;
+    min-width: 1465px;
   }
   .group-panel[data-cat="review"] .job-table-head,
   .group-panel[data-cat="review"] .job-row{
-    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 110px 110px 95px 95px 130px 60px 60px 110px;
-    min-width: 1670px;
+    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 110px 130px 95px 130px 60px 60px 110px;
+    min-width: 1585px;
   }
   .group-panel[data-cat="task"] .job-table-head,
   .group-panel[data-cat="task"] .job-row{
-    grid-template-columns: minmax(220px,420px) 100px 155px 95px 130px 60px 60px 110px;
-    min-width: 1030px;
+    grid-template-columns: minmax(220px,420px) 100px 155px 130px 130px 60px 60px 110px;
+    min-width: 1065px;
   }
-  .jc-ryanreview, .jc-estreview, .jc-submitted{ display: flex; align-items: center; justify-content: center; }
-  .jc-ryanreview input, .jc-estreview input{ width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+  .group-panel[data-cat="residential"] .job-table-head,
+  .group-panel[data-cat="residential"] .job-row{
+    grid-template-columns: minmax(220px,420px) 100px 155px 125px 110px 110px 130px 130px 60px 60px 110px;
+    min-width: 1360px;
+  }
+  .jc-sentto{ display: flex; align-items: center; justify-content: center; }
+  .jc-submitted{ display: flex; align-items: center; justify-content: center; }
+  .jc-submitted input{ width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
   .add-datetime-btn{
     font-family: 'Inter', sans-serif;
     font-size: 11px; font-weight: 700;
@@ -591,7 +596,7 @@
     background: var(--bg);
     border-bottom: 1px solid var(--line);
   }
-  .job-row-wrap{ border-bottom: 1px solid var(--line); }
+  .job-row-wrap{ border-bottom: 1px solid var(--line); width: max-content; min-width: 100%; }
   .job-row-wrap.priority-urgent{ background: var(--urgent-soft); }
   .job-row-wrap.priority-high{ background: var(--high-soft); }
   .job-row-wrap.priority-medium{ background: var(--medium-soft); }
@@ -609,15 +614,17 @@
     font-size: 10.5px; font-weight: 700;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    padding: 4px 20px 4px 9px;
+    text-align: center;
+    text-align-last: center;
+    padding: 4px 16px 4px 9px;
     border-radius: 999px;
     cursor: pointer;
     -webkit-appearance: none;
     appearance: none;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path fill='%23888' d='M1 1l5 5 5-5'/></svg>");
     background-repeat: no-repeat;
-    background-position: right 6px center;
-    background-size: 9px 6px;
+    background-position: right 4px center;
+    background-size: 8px 5px;
   }
   .row-quick-select.urgent{ background-color: var(--urgent-soft); color: var(--urgent); border: 1px solid var(--urgent); }
   .row-quick-select.high{ background-color: var(--high-soft); color: var(--high); border: 1px solid var(--high); }
@@ -628,17 +635,19 @@
     border-bottom: 1px dashed transparent;
   }
   .row-quick-edit:hover{ border-bottom-color: currentColor; }
-  .job-row.priority-urgent{ background: var(--urgent-soft); }
-  .job-row.priority-high{ background: var(--high-soft); }
-  .job-row.priority-medium{ background: var(--medium-soft); }
-  .job-row.priority-low{ background: var(--low-soft); }
+  /* Row background color lives entirely on .job-row-wrap now (see below) —
+     .job-row itself stays transparent so there's only one source of truth
+     and no risk of the two boxes' widths ever drifting out of sync. */
   .jc{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .jc-priority, .jc-due, .jc-estdue, .jc-takeoff, .jc-quote, .jc-manual, .jc-proposal, .jc-progress{
+  .jc-priority, .jc-due, .jc-estdue, .jc-takeoff, .jc-quote, .jc-manual,
+  .jc-contactreps, .jc-progress, .jc-notes, .jc-files, .jc-sentto, .jc-updated{
     text-align: center;
   }
   .job-table-head .jc-priority, .job-table-head .jc-due, .job-table-head .jc-estdue,
   .job-table-head .jc-takeoff, .job-table-head .jc-quote, .job-table-head .jc-manual,
-  .job-table-head .jc-proposal, .job-table-head .jc-progress{
+  .job-table-head .jc-contactreps, .job-table-head .jc-progress,
+  .job-table-head .jc-notes, .job-table-head .jc-files, .job-table-head .jc-sentto,
+  .job-table-head .jc-updated{
     text-align: center;
   }
   .jc-priority{ overflow: visible; }
@@ -661,6 +670,20 @@
     padding: 6px;
   }
   .job-chevron.open{ transform: rotate(90deg); }
+  .job-move-buttons{
+    display: flex; flex-direction: column;
+    flex: none;
+    gap: 1px;
+    margin-right: 2px;
+  }
+  .job-move-buttons button{
+    border: none; background: none; cursor: pointer;
+    font-size: 8px; line-height: 1;
+    padding: 2px 3px;
+    color: var(--ink-soft);
+    border-radius: 3px;
+  }
+  .job-move-buttons button:hover{ background: var(--blue-soft); color: var(--blue); }
   .job-task-text{ min-width: 0; overflow: hidden; }
   .job-task-name-row{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .job-task-name{
@@ -733,7 +756,7 @@
     color: var(--ink-soft);
     font-size: 13px;
     text-align: center;
-    min-width: 1460px;
+    min-width: 1350px;
   }
 
   /* ---------- CARD ---------- */
@@ -949,6 +972,8 @@
     border-radius: 6px;
     cursor: pointer;
     border: 1px solid transparent;
+    text-align: center;
+    text-align-last: center;
   }
   .status-select.status-not_started{ background: var(--medium-soft); color: var(--medium); border-color: var(--medium); }
   .status-select.status-in_progress{ background: #FFF6D6; color: #9A7B00; border-color: #D4B106; }
@@ -1261,10 +1286,10 @@
         <div class="category-subtext">MEASURE &middot; TAKEOFF &middot; ESTIMATE &middot; RESIDENTIAL &middot; COMMERCIAL</div>
       </div>
       <img class="page-heading-logo-img" alt="Sutton Flooring" src="data:image/png;base64,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">
-      <button type="button" class="header-minimize-btn" onclick="EP.toggleBoardMinimize()" id="header-minimize-btn" title="Minimize board">&#9662; Minimize</button>
+      <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
     </div>
 
-    <div class="overall-wrap">
+    <div class="overall-wrap overall-wrap-compact">
       <div class="overall-head">
         <span id="overall-label">0 jobs on the board</span>
         <b id="overall-pct">0%</b>
@@ -1272,16 +1297,12 @@
       <div class="tape"><div class="tape-fill" id="overall-fill" style="width:0%"></div></div>
     </div>
 
-    <div class="overall-wrap">
+    <div class="overall-wrap overall-wrap-compact">
       <div class="overall-head">
         <span id="completed-label">0 jobs submitted</span>
         <b id="completed-pct">0%</b>
       </div>
       <div class="tape"><div class="tape-fill complete-fill" id="completed-fill" style="width:0%"></div></div>
-    </div>
-
-    <div class="add-job-trigger-row">
-      <button class="btn add-job-trigger" onclick="EP.openAddJobModal()">+ Add New Job</button>
     </div>
   </div>
 
@@ -1476,11 +1497,9 @@
             <div class="jc jc-priority">Priority</div>
             <div class="jc jc-due">Estimate Time / Date</div>
             <div class="jc jc-estdue">Estimate Due</div>
-            <div class="jc jc-takeoff">Takeoff</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-proposal">Proposal</div>
-            <div class="jc jc-ryanreview">Complete Ready Review</div>
+            <div class="jc jc-sentto">Sent To</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
@@ -1507,8 +1526,7 @@
             <div class="jc jc-contactreps">Contact Reps Pricing</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-proposal">Proposal</div>
-            <div class="jc jc-ryanreview">Complete Ready Review</div>
+            <div class="jc jc-sentto">Sent To</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
@@ -1531,7 +1549,7 @@
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
             <div class="jc jc-due">Task Due</div>
-            <div class="jc jc-ryanreview">Ryan Review</div>
+            <div class="jc jc-sentto">Sent To</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
@@ -1558,8 +1576,7 @@
             <div class="jc jc-takeoff">Takeoff</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-proposal">Proposal</div>
-            <div class="jc jc-estreview">Estimator Review</div>
+            <div class="jc jc-sentto">Sent To</div>
             <div class="jc jc-submitted">Submitted</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
@@ -1587,8 +1604,7 @@
             <div class="jc jc-takeoff">Takeoff</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
-            <div class="jc jc-proposal">Proposal</div>
-            <div class="jc jc-ryanreview">Complete Ready Review</div>
+            <div class="jc jc-sentto">Sent To</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
@@ -1681,6 +1697,16 @@
 
   var PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 };
   var PRIORITY_LABEL = { urgent: "Urgent", high: "High", medium: "Medium", low: "Low" };
+  var SENT_TO_OPTIONS = [
+    { value: "ryan_review", label: "Ryan Review" },
+    { value: "pat", label: "Pat" },
+    { value: "damon", label: "Damon" },
+    { value: "jen", label: "Jen" },
+    { value: "elaine", label: "Elaine" },
+    { value: "brad", label: "Brad" },
+    { value: "emert", label: "Emert" },
+    { value: "customer", label: "Customer" }
+  ];
 
   var FIELD_LABELS = {
     measureComplete: "Measure Complete",
@@ -1703,7 +1729,7 @@
   // instead of a plain checkbox. Ryan Review, Estimator Review, and Sent Complete
   // stay as plain booleans since they drive automation (moving jobs between
   // categories) and need a simple on/off trigger, not a range of states.
-  var STATUS_FIELD_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "proposalComplete", "contactRepsPricing"];
+  var STATUS_FIELD_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "contactRepsPricing"];
   var STATUS_OPTIONS = [
     { value: "not_started", label: "Not Started" },
     { value: "in_progress", label: "In Progress" },
@@ -1726,9 +1752,9 @@
     return t;
   }
 
-  var DEFAULT_CHECK_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "proposalComplete", "ryanReview", "sentComplete"];
-  var RESIDENTIAL_CHECK_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "proposalComplete", "ryanReview", "estimatorReview", "sentComplete"];
-  var COMMERCIAL_CHECK_KEYS = ["takeoffComplete", "contactRepsPricing", "quoteComplete", "manualCreated", "proposalComplete", "ryanReview", "estimatorReview", "sentComplete"];
+  var DEFAULT_CHECK_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "ryanReview", "sentComplete"];
+  var RESIDENTIAL_CHECK_KEYS = ["quoteComplete", "manualCreated", "ryanReview", "estimatorReview", "sentComplete"];
+  var COMMERCIAL_CHECK_KEYS = ["takeoffComplete", "contactRepsPricing", "quoteComplete", "manualCreated", "ryanReview", "estimatorReview", "sentComplete"];
   var TASK_CHECK_KEYS = ["estimatorReview", "ryanReview", "sentComplete"];
 
   function checklistFor(t){
@@ -2173,6 +2199,7 @@
       email: email || "",
       jobType: jobType || "",
       assignTo: assignTo || "",
+      sentTo: "",
       measureDate: "",
       dueDate: "",
       dueTime: "",
@@ -2192,7 +2219,8 @@
       notes: "",
       attachments: [],
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      manualOrder: Date.now()
     };
   }
 
@@ -2504,12 +2532,20 @@
   // this only works while the tab is open; it can't reach a closed browser.
   // It only checks for new assignments; it deliberately does NOT overwrite
   // the local board, so it can never clobber something you're mid-edit on.
+  // Keeps every open tab/device in sync automatically. Every few seconds
+  // this pulls the latest shared board and, if anything actually changed —
+  // a job added, edited, or moved from another device — re-renders with
+  // it. It skips applying anything while a local edit is mid-save (see
+  // saveTimer) so a change in progress here can never get clobbered by an
+  // incoming update from someone else.
   function startAssignmentPolling(){
     setInterval(function(){
       if (!window.storage) return;
       window.storage.get(STORAGE_KEY, SHARED).then(function(res){
         if (!res || !res.value) return;
+        if (saveTimer) return; // a local edit is about to save — don't clobber it
         var fresh = JSON.parse(res.value);
+
         fresh.forEach(function(t){
           var seen = knownAssignments[t.id];
           if (t.assignTo && seen !== t.assignTo){
@@ -2517,8 +2553,15 @@
           }
           knownAssignments[t.id] = t.assignTo || '';
         });
+
+        var changed = JSON.stringify(fresh) !== JSON.stringify(tasks);
+        if (changed){
+          tasks = fresh;
+          tasks.forEach(normalizeStatusFields);
+          render();
+        }
       }).catch(function(){});
-    }, 25000);
+    }, 10000);
   }
 
   function showToast(message){
@@ -2884,6 +2927,35 @@
         showToast('🔔 New task assigned to ' + value + ': ' + (t.customer || 'Untitled job'));
       }
       knownAssignments[id] = value;
+      // Reassigning to one of the team means the job is back in active
+      // work — send it back to its home table (Residential/Commercial/
+      // Task) if it was sitting in Ryan Review or Job Submitted.
+      if (value === 'Pat' || value === 'Damon' || value === 'Ryan'){
+        t.ryanReview = false;
+        t.estimatorReview = false;
+        t.sentComplete = false;
+      }
+    }
+    // Sent To drives where the job goes next: Ryan Review sends it to Ryan,
+    // any named person or Customer sends it straight to Job Submitted.
+    // Every selection clears the other routing flags first, so this works
+    // correctly no matter which table the job is currently sitting in.
+    if (key === 'sentTo' && value){
+      if (value === 'ryan_review'){
+        t.ryanReview = true;
+        t.estimatorReview = false;
+        t.sentComplete = false;
+      } else if (t.assignTo && value.toLowerCase() === t.assignTo.toLowerCase()){
+        // Sending it to whoever it's actually assigned to means sending it
+        // back to them directly — i.e. back to the table it came from.
+        t.ryanReview = false;
+        t.estimatorReview = false;
+        t.sentComplete = false;
+      } else {
+        t.sentComplete = true;
+        t.ryanReview = false;
+        t.estimatorReview = false;
+      }
     }
     if (key === 'estimatorReview' && value === true){
       showToast('🔍 ESTIMATOR REVIEW' + (t.assignTo ? ' — ' + t.assignTo : '') + ': ' + (t.customer || 'Untitled job'));
@@ -2893,7 +2965,7 @@
     // Review is still checked sends it back to Ryan Review, or switching
     // Job Type moves it to a whole different group). Collapse the row every
     // time so it never lands open in its new home.
-    if (key === 'ryanReview' || key === 'estimatorReview' || key === 'sentComplete' || key === 'jobType'){
+    if (key === 'ryanReview' || key === 'estimatorReview' || key === 'sentComplete' || key === 'jobType' || key === 'sentTo' || key === 'assignTo'){
       expanded[id] = false;
     }
     scheduleSave();
@@ -3145,11 +3217,27 @@
     if (chev) chev.classList.toggle('collapsed', collapsedGroups[cat]);
   }
 
-  function toggleBoardMinimize(){
-    var app = document.querySelector('.app');
-    var btn = document.getElementById('header-minimize-btn');
-    var isMin = app.classList.toggle('board-minimized');
-    btn.innerHTML = isMin ? '<span class="min-chevron">&#9662;</span> Restore' : '&#9662; Minimize';
+  // Moves a job up or down within its own table — only meaningful within
+  // the same priority tier, since priority is still the primary sort;
+  // swapping manualOrder with a neighbor in a different tier just gets
+  // sorted right back where it was, which is the correct, expected result.
+  function moveJob(taskId, direction){
+    var t = tasks.find(function(x){ return x.id === taskId; });
+    if (!t) return;
+    var cat = categoryOf(t);
+    var siblings = sortTasks(tasks.filter(function(x){ return categoryOf(x) === cat; }));
+    var idx = siblings.findIndex(function(x){ return x.id === taskId; });
+    var targetIdx = idx + direction;
+    if (idx === -1 || targetIdx < 0 || targetIdx >= siblings.length) return;
+    var neighbor = siblings[targetIdx];
+    if (sortRank(neighbor) !== sortRank(t)) return; // don't cross a priority boundary
+    var tmp = t.manualOrder || t.createdAt;
+    t.manualOrder = neighbor.manualOrder || neighbor.createdAt;
+    neighbor.manualOrder = tmp;
+    t.updatedAt = Date.now();
+    neighbor.updatedAt = Date.now();
+    scheduleSave();
+    render();
   }
 
   // ---------- Attachments ----------
@@ -3335,6 +3423,8 @@
     return list.slice().sort(function(a,b){
       var pa = sortRank(a), pb = sortRank(b);
       if (pa !== pb) return pa - pb;
+      var ma = a.manualOrder || a.createdAt, mb = b.manualOrder || b.createdAt;
+      if (ma !== mb) return ma - mb;
       return a.createdAt - b.createdAt;
     });
   }
@@ -3373,18 +3463,21 @@
         t.estimateDueDate
           ? '<span class="row-quick-edit" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
           : '<button type="button" class="add-datetime-btn" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>']);
-      rows.push(['Takeoff', rowStatusCellHtml(t, 'takeoffComplete')]);
+      if (cat !== 'residential') rows.push(['Takeoff', rowStatusCellHtml(t, 'takeoffComplete')]);
       if (cat === 'commercial') rows.push(['Contact Reps Pricing', rowStatusCellHtml(t, 'contactRepsPricing')]);
       rows.push(['Quote', rowStatusCellHtml(t, 'quoteComplete')]);
       rows.push(['Manual', rowStatusCellHtml(t, 'manualCreated')]);
-      rows.push(['Proposal', rowStatusCellHtml(t, 'proposalComplete')]);
     }
 
+    rows.push(['Sent To',
+      '<select class="row-quick-select badge-select medium" onchange="EP.updateField(\'' + t.id + '\',\'sentTo\', this.value)">' +
+        '<option value=""' + (!t.sentTo ? ' selected' : '') + '>Add Person</option>' +
+        SENT_TO_OPTIONS.map(function(o){
+          return '<option value="' + o.value + '"' + (t.sentTo === o.value ? ' selected' : '') + '>' + o.label + '</option>';
+        }).join('') +
+      '</select>']);
     if (cat === 'review'){
-      rows.push(['Estimator Review', '<input type="checkbox" ' + (t.estimatorReview ? 'checked' : '') + ' onchange="EP.updateField(\'' + t.id + '\',\'estimatorReview\', this.checked)">']);
       rows.push(['Submitted', '<input type="checkbox" ' + (t.sentComplete ? 'checked' : '') + ' onchange="EP.updateField(\'' + t.id + '\',\'sentComplete\', this.checked)">']);
-    } else {
-      rows.push([(isTaskCat ? 'Ryan Review' : 'Complete Ready Review'), '<input type="checkbox" ' + (t.ryanReview ? 'checked' : '') + ' onchange="EP.updateField(\'' + t.id + '\',\'ryanReview\', this.checked)">']);
     }
 
     return '<div class="mobile-quick-status">' +
@@ -3490,6 +3583,16 @@
   // Renders a compact status dropdown for a single status field, right on the
   // row — but only if that field is actually part of this job's checklist
   // (e.g. Quote Complete isn't a step for Task-type jobs).
+  // Lets you nudge a job up or down past its neighbors of the same priority
+  // — handy when two jobs are tied at, say, Medium and you want one listed
+  // above the other regardless of when each was added.
+  function moveButtonsHtml(t){
+    return '<span class="job-move-buttons" onclick="event.stopPropagation()">' +
+      '<button type="button" onclick="EP.moveJob(\'' + t.id + '\', -1)" title="Move up">&#9650;</button>' +
+      '<button type="button" onclick="EP.moveJob(\'' + t.id + '\', 1)" title="Move down">&#9660;</button>' +
+    '</span>';
+  }
+
   function rowStatusCellHtml(t, key){
     var applies = checklistFor(t).some(function(f){ return f.key === key; });
     if (!applies) return '<span class="cell-muted">—</span>';
@@ -3499,6 +3602,20 @@
         return '<option value="' + o.value + '"' + (o.value === curVal ? ' selected' : '') + '>' + o.label + '</option>';
       }).join('') +
       '</select>';
+  }
+
+  // Sent To replaces the plain Ryan Review checkbox everywhere except
+  // Ryan Review's own table — picking "Ryan Review" sends the job there,
+  // picking anyone else sends it straight to Job Submitted (see updateField).
+  function sentToCellHtml(t){
+    return '<div class="jc jc-sentto">' +
+      '<select class="row-quick-select badge-select medium" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'sentTo\', this.value)">' +
+        '<option value=""' + (!t.sentTo ? ' selected' : '') + '>Add Person</option>' +
+        SENT_TO_OPTIONS.map(function(o){
+          return '<option value="' + o.value + '"' + (t.sentTo === o.value ? ' selected' : '') + '>' + o.label + '</option>';
+        }).join('') +
+      '</select>' +
+    '</div>';
   }
 
   function rowHtml(t){
@@ -3533,6 +3650,7 @@
       '<div class="job-row-wrap priority-' + priority + (t.estimatorReview ? ' review-flag-yellow' : (t.ryanReview ? ' review-flag-blue' : '')) + '">' +
         '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + '" data-id="' + t.id + '">' +
           '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
+            moveButtonsHtml(t) +
             '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
             (t.assignTo ? '<span class="owner-avatar" title="' + escapeHtml(t.assignTo) + '" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'' + escapeHtml(t.assignTo) + '\')">' + initialsFor(t.assignTo) + '</span>' : '<span class="owner-avatar empty" title="Unassigned" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'\')">?</span>') +
             '<span class="job-task-text">' +
@@ -3554,7 +3672,7 @@
               ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
               : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>') +
           '</div>' +
-          '<div class="jc jc-ryanreview" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.ryanReview ? 'checked' : '') + ' title="Ryan Review" onchange="EP.updateField(\'' + t.id + '\',\'ryanReview\', this.checked)"></div>' +
+          sentToCellHtml(t) +
           '<div class="jc jc-progress"><div class="tape small"><div class="tape-fill" style="width:' + pct + '%"></div></div><span class="progress-pct-sm">' + pct + '%</span></div>' +
           '<div class="jc jc-notes">' + (noteCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">📝</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">+ Add</button>') + '</div>' +
           '<div class="jc jc-files">' + (fileCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">📎 ' + fileCount + '</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">+ Add</button>') + '</div>' +
@@ -3568,6 +3686,7 @@
     '<div class="job-row-wrap priority-' + priority + (t.estimatorReview ? ' review-flag-yellow' : (t.ryanReview ? ' review-flag-blue' : '')) + '">' +
       '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + '" data-id="' + t.id + '">' +
         '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
+          moveButtonsHtml(t) +
           '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
           (t.assignTo ? '<span class="owner-avatar" title="' + escapeHtml(t.assignTo) + '" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'' + escapeHtml(t.assignTo) + '\')">' + initialsFor(t.assignTo) + '</span>' : '<span class="owner-avatar empty" title="Unassigned" onclick="event.stopPropagation(); EP.openAssignPicker(\'' + t.id + '\',\'\')">?</span>') +
           '<span class="job-task-text">' +
@@ -3596,16 +3715,14 @@
             ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
             : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>') +
         '</div>')) +
-        '<div class="jc jc-takeoff">' + rowStatusCellHtml(t, 'takeoffComplete') + '</div>' +
+        (categoryOf(t) === 'residential' ? '' : '<div class="jc jc-takeoff">' + rowStatusCellHtml(t, 'takeoffComplete') + '</div>') +
         (categoryOf(t) === 'commercial'
           ? '<div class="jc jc-contactreps">' + rowStatusCellHtml(t, 'contactRepsPricing') + '</div>'
           : '') +
         '<div class="jc jc-quote">' + rowStatusCellHtml(t, 'quoteComplete') + '</div>' +
         '<div class="jc jc-manual">' + rowStatusCellHtml(t, 'manualCreated') + '</div>' +
-        '<div class="jc jc-proposal">' + rowStatusCellHtml(t, 'proposalComplete') + '</div>' +
-        (categoryOf(t) === 'review'
-          ? '<div class="jc jc-estreview" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.estimatorReview ? 'checked' : '') + ' title="Estimator Review — sends this back to the estimator" onchange="EP.updateField(\'' + t.id + '\',\'estimatorReview\', this.checked)"></div>'
-          : '<div class="jc jc-ryanreview" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.ryanReview ? 'checked' : '') + ' title="Complete Ready Review — sends this to Ryan for review" onchange="EP.updateField(\'' + t.id + '\',\'ryanReview\', this.checked)"></div>') +
+        (categoryOf(t) === 'residential' ? sentToCellHtml(t) : '') +
+        (categoryOf(t) === 'residential' ? '' : sentToCellHtml(t)) +
         (categoryOf(t) === 'review'
           ? '<div class="jc jc-submitted" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.sentComplete ? 'checked' : '') + ' title="Submitted — moves this to Job Submitted" onchange="EP.updateField(\'' + t.id + '\',\'sentComplete\', this.checked)"></div>'
           : '') +
@@ -3735,7 +3852,7 @@
     deleteTask: deleteTask,
     toggleExpand: toggleExpand,
     toggleGroup: toggleGroup,
-    toggleBoardMinimize: toggleBoardMinimize,
+    moveJob: moveJob,
     uploadFiles: uploadFiles,
     uploadFilesFromNotes: uploadFilesFromNotes,
     triggerRowFileUpload: triggerRowFileUpload,
