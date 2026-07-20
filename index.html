@@ -1458,8 +1458,6 @@
     </div>
   </div>
 
-  <datalist id="customer-datalist"></datalist>
-
   <input type="file" id="row-file-input" multiple style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.heic,.webp" onchange="EP.handleRowFileInput(this.files); this.value='';">
 
   <div class="add-job-modal-overlay" id="add-job-modal-overlay" onclick="if(event.target===this) EP.closeAddJobModal()">
@@ -1475,7 +1473,7 @@
         <button type="button" class="jobtype-picker-btn" data-type="task" onclick="EP.setNewJobType('task')">Task</button>
       </div>
       <input type="hidden" id="new-jobtype" value="residential">
-      <input type="text" id="new-customer" placeholder="Customer / job name…" autocomplete="off" list="customer-datalist" onchange="EP.tryAutofillNewFromCustomer()">
+      <input type="text" id="new-customer" placeholder="Customer / job name…" autocomplete="off">
       <div class="notes-preview" id="new-task-description-trigger" style="display:none;" onclick="EP.openTaskDescriptionForNew()">
         <span class="notes-placeholder">Click to write the task description…</span>
       </div>
@@ -2128,76 +2126,6 @@
   // Finds the most recently updated existing job with a matching customer name,
   // so contact info can be suggested from real prior jobs instead of being
   // stored/suggested by the browser itself.
-  function findCustomerRecord(name, excludeId){
-    var norm = (name || '').trim().toLowerCase();
-    if (!norm) return null;
-    var match = null;
-    tasks.forEach(function(t){
-      if (excludeId && t.id === excludeId) return;
-      if ((t.customer || '').trim().toLowerCase() === norm){
-        if (!match || (t.updatedAt || 0) > (match.updatedAt || 0)) match = t;
-      }
-    });
-    return match;
-  }
-
-  function refreshCustomerDatalist(){
-    var dl = document.getElementById('customer-datalist');
-    if (!dl) return;
-    var seen = {};
-    var opts = '';
-    tasks.forEach(function(t){
-      var n = (t.customer || '').trim();
-      if (n && !seen[n.toLowerCase()]){
-        seen[n.toLowerCase()] = true;
-        opts += '<option value="' + escapeHtml(n) + '">';
-      }
-    });
-    dl.innerHTML = opts;
-  }
-
-  function tryAutofillNewFromCustomer(){
-    var jobTypeEl = document.getElementById('new-jobtype');
-    if (jobTypeEl && jobTypeEl.value === 'task') return;
-    var nameInput = document.getElementById('new-customer');
-    var match = findCustomerRecord(nameInput.value);
-    if (!match) return;
-    var addressInput = document.getElementById('new-address');
-    var cityInput = document.getElementById('new-city');
-    var stateInput = document.getElementById('new-state');
-    var zipInput = document.getElementById('new-zip');
-    var phoneInput = document.getElementById('new-phone');
-    var emailInput = document.getElementById('new-email');
-    var filledAny = false;
-    if (addressInput && !addressInput.value && match.address){ addressInput.value = match.address; filledAny = true; }
-    if (cityInput && !cityInput.value && match.city){ cityInput.value = match.city; filledAny = true; }
-    if (stateInput && !stateInput.value && match.state){ stateInput.value = match.state; filledAny = true; }
-    if (zipInput && !zipInput.value && match.zip){ zipInput.value = match.zip; filledAny = true; }
-    if (phoneInput && !phoneInput.value && match.phone){ phoneInput.value = formatPhoneInput(match.phone); filledAny = true; }
-    if (emailInput && !emailInput.value && match.email){ emailInput.value = match.email; filledAny = true; }
-    if (filledAny) showToast('📇 Filled in contact details from a previous job for ' + (match.customer || 'this customer'));
-  }
-
-  function tryAutofillTaskFromCustomer(taskId, name){
-    var t = tasks.find(function(x){ return x.id === taskId; });
-    if (!t) return;
-    var match = findCustomerRecord(name, taskId);
-    if (!match) return;
-    var changed = false;
-    if (!t.address && match.address){ t.address = match.address; changed = true; }
-    if (!t.city && match.city){ t.city = match.city; changed = true; }
-    if (!t.state && match.state){ t.state = match.state; changed = true; }
-    if (!t.zip && match.zip){ t.zip = match.zip; changed = true; }
-    if (!t.phone && match.phone){ t.phone = match.phone; changed = true; }
-    if (!t.email && match.email){ t.email = match.email; changed = true; }
-    if (changed){
-      t.updatedAt = Date.now();
-      showToast('📇 Filled in contact details from a previous job for ' + (match.customer || 'this customer'));
-      scheduleSave();
-      render();
-    }
-  }
-
   function autofillNewAddress(){
     var input = document.getElementById('new-address');
     if (!input) return;
@@ -3546,7 +3474,7 @@
               '</div>'
             ) : (
               '<div class="field field-span-all"><label>Customer</label>' +
-                '<input type="text" value="' + escapeHtml(t.customer) + '" autocomplete="off" list="customer-datalist" onchange="EP.updateField(\'' + t.id + '\',\'customer\', this.value); EP.tryAutofillTaskFromCustomer(\'' + t.id + '\', this.value);"></div>'
+                '<input type="text" value="' + escapeHtml(t.customer) + '" autocomplete="off" onchange="EP.updateField(\'' + t.id + '\',\'customer\', this.value);"></div>'
             )) +
             (!isTask ? (
               '<div class="field field-narrow"><label>Phone (optional)</label>' +
@@ -3784,7 +3712,6 @@
   function renderNow(){
     if (!loaded) return;
 
-    refreshCustomerDatalist();
     refreshNotesFilesCount();
     if (filesManagerTaskId) renderFilesManagerList();
 
@@ -3921,8 +3848,6 @@
     openAddJobModal: openAddJobModal,
     openTaskDescriptionForNew: openTaskDescriptionForNew,
     setNewJobType: setNewJobType,
-    tryAutofillNewFromCustomer: tryAutofillNewFromCustomer,
-    tryAutofillTaskFromCustomer: tryAutofillTaskFromCustomer,
     openDatePicker: openDatePicker,
     closeDatePicker: closeDatePicker,
     dpChangeMonth: dpChangeMonth,
