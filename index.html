@@ -620,15 +620,6 @@
     gap: 10px;
     align-items: center;
   }
-  .group-panel[data-cat="review"] .job-table-head,
-  .group-panel[data-cat="review"] .job-row,
-  .group-panel[data-cat="review"] .job-row-wrap{
-    min-width: 1585px;
-  }
-  .group-panel[data-cat="review"] .job-table-head,
-  .group-panel[data-cat="review"] .job-row{
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-status) var(--col-sentto) var(--col-checkbox) var(--col-progress) 60px 60px 110px;
-  }
   .group-panel[data-cat="task"] .job-table-head,
   .group-panel[data-cat="task"] .job-row,
   .group-panel[data-cat="task"] .job-row-wrap{
@@ -641,15 +632,13 @@
   .group-panel[data-cat="residential"] .job-table-head,
   .group-panel[data-cat="residential"] .job-row,
   .group-panel[data-cat="residential"] .job-row-wrap{
-    min-width: 1360px;
+    min-width: 1480px;
   }
   .group-panel[data-cat="residential"] .job-table-head,
   .group-panel[data-cat="residential"] .job-row{
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-status) var(--col-estdue) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
   }
   .jc-sentto{ display: flex; align-items: center; justify-content: center; }
-  .jc-submitted{ display: flex; align-items: center; justify-content: center; }
-  .jc-submitted input{ width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
   .add-datetime-btn{
     font-family: 'Inter', sans-serif;
     font-size: 11px; font-weight: 700;
@@ -662,6 +651,7 @@
     letter-spacing: .02em;
   }
   .add-datetime-btn:hover{ filter: brightness(0.96); }
+  .add-datetime-btn.grey{ background: #fff; color: var(--ink-soft); border-color: var(--line); }
   .job-table-head{
     padding: 8px 16px;
     font-size: var(--font-table-head);
@@ -701,11 +691,19 @@
     background-repeat: no-repeat;
     background-position: right 4px center;
     background-size: 8px 5px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .row-quick-select.urgent{ background-color: var(--urgent-soft); color: var(--urgent); border: 1px solid var(--urgent); }
   .row-quick-select.high{ background-color: var(--high-soft); color: var(--high); border: 1px solid var(--high); }
   .row-quick-select.medium{ background-color: var(--medium-soft); color: var(--medium); border: 1px solid var(--medium); }
   .row-quick-select.low{ background-color: var(--low-soft); color: var(--low); border: 1px solid var(--low); }
+  .row-quick-select.none{ background-color: var(--medium-soft); color: var(--medium); border: 1px solid var(--medium); }
+  .row-quick-select.none.grey{ background-color: #fff; color: var(--ink-soft); border: 1px solid var(--line); }
   .row-quick-edit{
     cursor: pointer;
     border-bottom: 1px dashed transparent;
@@ -727,9 +725,10 @@
     text-align: center;
   }
   .jc-priority{ overflow: visible; }
-  /* When the job currently at the top of Ryan Review / Job Submitted is a
-     type that has no Takeoff step (Residential), the whole column hides —
-     both the header and every row's cell — so nothing shifts out of place. */
+  /* Ryan Review / Job Submitted hold a mix of job types — when the job
+     currently on top doesn't use a Takeoff step (Residential), the whole
+     column hides, both header and every row's cell, so the top row fully
+     dictates what the table shows. */
   .group-panel.hide-takeoff .jc-takeoff{ display: none; }
   .jc-task{
     display:flex; align-items:center; gap:8px; white-space:normal;
@@ -1059,6 +1058,7 @@
   .status-select.status-in_progress{ background: #FFF6D6; color: #9A7B00; border-color: #D4B106; }
   .status-select.status-completed{ background: var(--low-soft); color: var(--low); border-color: var(--low); }
   .status-select.status-na{ background: #EDE7F6; color: #6A4C9C; border-color: #8862C4; }
+  .status-select.status-not_complete{ background: var(--urgent-soft); color: var(--urgent); border-color: var(--urgent); }
 
   .notes-preview{
     min-height: 60px;
@@ -1352,6 +1352,32 @@
     position: relative;
     box-shadow: inset 0 0 0 3px #FF7A1A;
   }
+
+  /* ---------- Appointment-time urgency escalation ----------
+     Tracks how close a job's Estimate Time/Date (the measure/appointment
+     time) is to arriving. Purely a display overlay — never writes to the
+     job's stored priority, so it always has something real to fall back
+     to once the window passes. See apptUrgencyTier() in JS. */
+  .job-row.appt-yellow{
+    position: relative;
+    box-shadow: inset 0 0 0 3px #E8FF00;
+  }
+  .job-row.appt-orange{
+    position: relative;
+    box-shadow: inset 0 0 0 3px #FF7A00;
+  }
+  .job-row.appt-red{
+    position: relative;
+    box-shadow: inset 0 0 0 3px #FF1E1E;
+  }
+  .job-row.appt-flash{
+    position: relative;
+    animation: apptFlashBorder 1s steps(1, start) infinite;
+  }
+  @keyframes apptFlashBorder{
+    0%, 49%{ box-shadow: inset 0 0 0 3px #FF1E1E; }
+    50%, 100%{ box-shadow: inset 0 0 0 3px transparent; }
+  }
   .owner-avatar.extra-avatar{
     color: #fff;
     margin-left: -8px;
@@ -1553,9 +1579,10 @@
       </div>
       <div class="add-job-modal-selects">
         <select id="new-priority">
+          <option value="" selected>Priority</option>
           <option value="urgent">Urgent</option>
           <option value="high">High</option>
-          <option value="medium" selected>Medium</option>
+          <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
         <select id="new-assign">
@@ -1588,6 +1615,7 @@
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
             <div class="jc jc-due">Estimate Time / Date</div>
+            <div class="jc jc-measure">Measure</div>
             <div class="jc jc-estdue">Estimate Due</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
@@ -1672,7 +1700,6 @@
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
             <div class="jc jc-sentto">Sent To</div>
-            <div class="jc jc-submitted">Submitted</div>
             <div class="jc jc-progress">Progress</div>
             <div class="jc jc-notes">Notes</div>
             <div class="jc jc-files">Files</div>
@@ -1695,8 +1722,8 @@
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
-            <div class="jc jc-due">Estimate Time / Date</div>
-            <div class="jc jc-estdue">Estimate Due</div>
+            <div class="jc jc-due" id="sentComplete-due-label">Estimate Time / Date</div>
+            <div class="jc jc-estdue" id="sentComplete-estdue-label">Estimate Due</div>
             <div class="jc jc-takeoff">Takeoff</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
@@ -1791,8 +1818,8 @@
   var loaded = false;
   var knownAssignments = {}; // taskId -> last-seen assignTo value, used to detect new assignments
 
-  var PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 };
-  var PRIORITY_LABEL = { urgent: "Urgent", high: "High", medium: "Medium", low: "Low" };
+  var PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3, "": 4 };
+  var PRIORITY_LABEL = { urgent: "Urgent", high: "High", medium: "Medium", low: "Low", "": "Priority" };
   var SENT_TO_OPTIONS = [
     { value: "ryan_review", label: "Ryan Review" },
     { value: "pat", label: "Pat" },
@@ -1801,7 +1828,8 @@
     { value: "elaine", label: "Elaine" },
     { value: "brad", label: "Brad" },
     { value: "emert", label: "Emert" },
-    { value: "customer", label: "Customer" }
+    { value: "customer", label: "Customer" },
+    { value: "job_submitted", label: "Job Submitted" }
   ];
 
   var FIELD_LABELS = {
@@ -2215,7 +2243,7 @@
   function blankTask(customer, priority, address, city, state, zip, phone, email, jobType, assignTo){
     return {
       id: uid(),
-      priority: priority || "medium",
+      priority: priority || "",
       customer: customer || "",
       address: address || "",
       city: city || "",
@@ -2233,7 +2261,7 @@
       dueTime: "",
       estimateArrivalTime: "",
       estimateDueDate: "",
-      measureComplete: "not_started",
+      measureComplete: "",
       takeoffComplete: "not_started",
       estimateComplete: "not_started",
       manualCreated: "not_started",
@@ -2247,6 +2275,8 @@
       notes: "",
       attachments: [],
       createdAt: Date.now(),
+      createdDate: todayISO(),
+      createdTime: pad2(new Date().getHours()) + ':' + pad2(new Date().getMinutes()),
       updatedAt: Date.now(),
       manualOrder: Date.now()
     };
@@ -2287,13 +2317,107 @@
     return null;
   }
 
+  // ---------- Appointment-time urgency escalation ----------
+  // Tracks the job's key deadlines and escalates as they approach, then
+  // eases back off once they've passed. This is purely a DISPLAY overlay —
+  // it never writes t.priority to storage — so "resetting" just means the
+  // tier goes back to null and every display function falls through to
+  // the job's real stored priority automatically. Nothing to undo.
+  //
+  // Deadlines covered:
+  //  - Estimate Time / Date (the measure/appointment moment — measureDate +
+  //    estimateArrivalTime for Residential, dueDate + dueTime for
+  //    everything else). For Commercial jobs this is the same field shown
+  //    as "Bid Due / Time", so it's covered automatically.
+  //  - Estimate Due, Residential jobs only (it has no time of its own, so
+  //    it's anchored to 5:00 PM that day — same convention the older
+  //    due-flash system already used).
+  // If more than one deadline is active at once, whichever is currently
+  // more urgent wins.
+  var PRIORITY_STEPS = ['urgent', 'high', 'medium', 'low']; // index 0 = most urgent
+
+  function bumpPriorityUp(p, steps){
+    var idx = PRIORITY_STEPS.indexOf(p);
+    if (idx === -1) idx = PRIORITY_STEPS.length - 1;
+    idx = Math.max(idx - steps, 0);
+    return PRIORITY_STEPS[idx];
+  }
+
+  function appointmentFieldsOf(t){
+    var dateField = t.jobType === 'residential' ? 'measureDate' : 'dueDate';
+    var timeField = t.jobType === 'residential' ? 'estimateArrivalTime' : 'dueTime';
+    return { date: t[dateField], time: t[timeField] };
+  }
+
+  function apptMinutesUntil(t){
+    var f = appointmentFieldsOf(t);
+    return minutesUntil(f.date, f.time);
+  }
+
+  // Tiers, keyed to minutes until (positive) / past (negative) a deadline:
+  //   45 -> 15 min out   : yellow, priority bumped up 1 step
+  //   15 -> 0 min out    : orange, priority bumped up 2 steps
+  //   0 -> 5 min past    : red, priority forced to urgent
+  //   5 -> 10 min past   : red border flashes every second, still urgent
+  //   10+ min past       : back to normal — falls through to real priority
+  var URGENCY_TIER_RANK = { yellow: 1, orange: 2, red: 3, flash: 4 };
+
+  function urgencyTierFromMinutes(mins){
+    if (mins === null) return null;
+    if (mins > 45) return null;
+    if (mins > 15) return 'yellow';
+    if (mins > 0) return 'orange';
+    if (mins > -5) return 'red';
+    if (mins > -10) return 'flash';
+    return null;
+  }
+
+  function apptUrgencyTier(t){
+    if (categoryOf(t) === 'sentComplete') return null;
+
+    var candidates = [];
+    candidates.push(apptMinutesUntil(t));
+    if (categoryOf(t) === 'residential' && t.estimateDueDate){
+      candidates.push(minutesUntilEndOfDay(t.estimateDueDate, '17', '00'));
+    }
+
+    var bestTier = null, bestRank = 0;
+    candidates.forEach(function(mins){
+      var tier = urgencyTierFromMinutes(mins);
+      var rank = tier ? URGENCY_TIER_RANK[tier] : 0;
+      if (rank > bestRank){ bestRank = rank; bestTier = tier; }
+    });
+    return bestTier;
+  }
+
+  function apptUrgencyClass(t){
+    var tier = apptUrgencyTier(t);
+    if (tier === 'yellow') return ' appt-yellow';
+    if (tier === 'orange') return ' appt-orange';
+    if (tier === 'red') return ' appt-red';
+    if (tier === 'flash') return ' appt-flash';
+    return '';
+  }
+
+  function apptDisplayPriority(t){
+    var tier = apptUrgencyTier(t);
+    if (tier === 'yellow') return bumpPriorityUp(t.priority, 1);
+    if (tier === 'orange') return bumpPriorityUp(t.priority, 2);
+    if (tier === 'red' || tier === 'flash') return 'urgent';
+    return null;
+  }
+
   function displayPriority(t){
+    var apptPriority = apptDisplayPriority(t);
+    if (apptPriority) return apptPriority;
     var tier = dueUrgencyTier(t);
     return (tier === "today" || tier === "overdue") ? "urgent" : t.priority;
   }
 
   function sortRank(t){
     var stored = PRIORITY_ORDER[t.priority];
+    var apptPriority = apptDisplayPriority(t);
+    if (apptPriority) return PRIORITY_ORDER[apptPriority];
     var tier = dueUrgencyTier(t);
     if (tier === "today" || tier === "overdue") return PRIORITY_ORDER.urgent;
     if (tier === "tomorrow" || tier === "soon") return Math.min(stored, PRIORITY_ORDER.high);
@@ -2629,10 +2753,16 @@
   function isDueSoon(t){
     if (categoryOf(t) === 'sentComplete') return false;
     var candidates = [];
-    if (t.jobType !== 'residential'){
+    // Commercial's Bid Due/Time and Residential's Estimate Due are now
+    // covered by the tiered appt-urgency system (see apptUrgencyTier),
+    // which is more precise than this flat 45-min flash — skip them here
+    // so the two systems don't fight over the same border.
+    if (t.jobType !== 'residential' && t.jobType !== 'commercial'){
       candidates.push(minutesUntil(t.dueDate, t.dueTime));
     }
-    candidates.push(minutesUntilEndOfDay(t.estimateDueDate, '17', '00'));
+    if (categoryOf(t) !== 'residential'){
+      candidates.push(minutesUntilEndOfDay(t.estimateDueDate, '17', '00'));
+    }
     for (var i = 0; i < candidates.length; i++){
       var mins = candidates[i];
       if (mins !== null && mins <= 45) return true;
@@ -2711,7 +2841,7 @@
   var dtTaskId = null, dtDateField = null, dtTimeField = null;
   var dtViewYear = null, dtViewMonth = null, dtSelectedDate = '';
 
-  function openDateTimePicker(taskId, dateField, timeField, currentDate, currentTime){
+  function openDateTimePicker(taskId, dateField, timeField, currentDate, currentTime, minuteStep){
     dtTaskId = taskId;
     dtDateField = dateField;
     dtTimeField = timeField;
@@ -2728,8 +2858,9 @@
     var hourOpts = '';
     for (var h = 1; h <= 12; h++){ hourOpts += '<option value="' + h + '">' + h + '</option>'; }
     hourSel.innerHTML = hourOpts;
+    var step = minuteStep || 5;
     var minOpts = '';
-    for (var m = 0; m < 60; m += 5){ var mm = (m < 10 ? '0' : '') + m; minOpts += '<option value="' + mm + '">' + mm + '</option>'; }
+    for (var m = 0; m < 60; m += step){ var mm = (m < 10 ? '0' : '') + m; minOpts += '<option value="' + mm + '">' + mm + '</option>'; }
     minSel.innerHTML = minOpts;
     hourSel.value = p.hour12 || '9';
     minSel.value = p.minute || '00';
@@ -2924,7 +3055,7 @@
     zipInput.value = "";
     phoneInput.value = "";
     emailInput.value = "";
-    prioritySel.value = "medium";
+    prioritySel.value = "";
     setNewJobType("residential");
     assignSel.value = "";
     if (t.assignTo){
@@ -2990,6 +3121,8 @@
         t.sentComplete = true;
         t.ryanReview = false;
         t.estimatorReview = false;
+        t.priority = '';
+        t.justReassigned = false;
       }
     }
     if (key === 'estimatorReview' && value === true){
@@ -3486,22 +3619,23 @@
     rows.push(['Assigned To', '<span class="mqs-avatars">' + avatarGroupHtml(t) + '</span>']);
 
     rows.push(['Priority',
-      '<select class="row-quick-select badge-select ' + priority + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
-        ['urgent','high','medium','low'].map(function(p){
+      '<select class="row-quick-select badge-select ' + (priority || 'none') + (priority ? '' : ' grey') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
+        ['', 'urgent','high','medium','low'].map(function(p){
           return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
         }).join('') +
       '</select>']);
 
     rows.push([dueLabel,
       dtDisplay
-        ? '<span class="row-quick-edit" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
-        : '<button type="button" class="add-datetime-btn" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>']);
+        ? '<span class="add-datetime-btn grey" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
+        : '<button type="button" class="add-datetime-btn grey" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>']);
 
     if (!isTaskCat){
+      if (cat === 'residential') rows.push(['Measure', rowMeasureCellHtml(t)]);
       rows.push(['Estimate Due',
         t.estimateDueDate
-          ? '<span class="row-quick-edit" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
-          : '<button type="button" class="add-datetime-btn" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>']);
+          ? '<span class="add-datetime-btn grey" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
+          : '<button type="button" class="add-datetime-btn grey" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>']);
       if (cat !== 'residential') rows.push(['Takeoff', rowStatusCellHtml(t, 'takeoffComplete')]);
       if (cat === 'commercial') rows.push(['Rep Price', rowStatusCellHtml(t, 'contactRepsPricing')]);
       rows.push(['Quote', rowStatusCellHtml(t, 'quoteComplete')]);
@@ -3515,9 +3649,6 @@
           return '<option value="' + o.value + '"' + (t.sentTo === o.value ? ' selected' : '') + '>' + o.label + '</option>';
         }).join('') +
       '</select>']);
-    if (cat === 'review'){
-      rows.push(['Submitted', '<input type="checkbox" ' + (t.sentComplete ? 'checked' : '') + ' onchange="EP.updateField(\'' + t.id + '\',\'sentComplete\', this.checked)">']);
-    }
 
     return '<div class="mobile-quick-status">' +
       rows.map(function(r){
@@ -3538,6 +3669,14 @@
 
     var isTask = t.jobType === 'task';
 
+    var createdDisplay = (t.createdDate ? t.createdDate : '') + (t.createdDate && t.createdTime ? ' ' : '') + (t.createdTime ? formatTime12(t.createdTime) : '');
+    var createdFieldHtml =
+      '<div class="field field-narrow"><label>Created</label>' +
+        (createdDisplay
+          ? '<span class="add-datetime-btn grey" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'createdDate\',\'createdTime\',\'' + (t.createdDate || '') + '\',\'' + (t.createdTime || '') + '\', 1)">' + escapeHtml(createdDisplay) + '</span>'
+          : '<button type="button" class="add-datetime-btn grey" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'createdDate\',\'createdTime\',\'\',\'\', 1)">Add Date / Time</button>') +
+      '</div>';
+
     return '' +
         '<div class="card-body-inner">' +
           mobileQuickStatusHtml(t) +
@@ -3552,6 +3691,7 @@
               '<div class="field field-span-all"><label>Customer</label>' +
                 '<input type="text" value="' + escapeHtml(t.customer) + '" autocomplete="off" onchange="EP.updateField(\'' + t.id + '\',\'customer\', this.value);"></div>'
             )) +
+            createdFieldHtml +
             (!isTask ? (
               '<div class="field field-narrow"><label>Phone (optional)</label>' +
                 '<input type="tel" value="' + escapeHtml(formatPhoneInput(t.phone)) + '" autocomplete="off" oninput="this.value = EP.formatPhoneInput(this.value)" onchange="this.value = EP.finalizePhoneInput(this.value); EP.updateField(\'' + t.id + '\',\'phone\', this.value)"></div>' +
@@ -3673,6 +3813,27 @@
       '</select>';
   }
 
+  // Measure column — same select/badge pattern and styling as every other
+  // status field (Quote, Manual, etc.), just its own smaller option set:
+  // the button reads "Status" until something's picked, then Complete,
+  // Not Complete, or N/A.
+  var MEASURE_STATUS_OPTIONS = [
+    { value: 'completed', label: 'Complete' },
+    { value: 'not_complete', label: 'Not Complete' },
+    { value: 'na', label: 'N/A' }
+  ];
+
+  function rowMeasureCellHtml(t){
+    var curVal = t.measureComplete || '';
+    var cssTier = curVal || 'not_started'; // reuses the existing neutral "not started" styling for the blank Status state
+    return '<select class="row-quick-select status-select status-' + cssTier + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'measureComplete\', this.value); this.className = \'row-quick-select status-select status-\' + (this.value || \'not_started\');">' +
+      '<option value=""' + (!curVal ? ' selected' : '') + '>Status</option>' +
+      MEASURE_STATUS_OPTIONS.map(function(o){
+        return '<option value="' + o.value + '"' + (o.value === curVal ? ' selected' : '') + '>' + o.label + '</option>';
+      }).join('') +
+      '</select>';
+  }
+
   // Sent To replaces the plain Ryan Review checkbox everywhere except
   // Ryan Review's own table — picking "Ryan Review" sends the job there,
   // picking anyone else sends it straight to Job Submitted (see updateField).
@@ -3712,12 +3873,18 @@
     var noteCount = t.notes && t.notes.trim() ? 1 : 0;
     var fileCount = t.attachments ? t.attachments.length : 0;
 
+    // Created date/time — plain, non-interactive text under the job name.
+    // Editing lives as its own field in the expanded detail panel below
+    // (see detailPanelHtml), not by clicking this text.
+    var createdDisplay = (t.createdDate ? t.createdDate : '') + (t.createdDate && t.createdTime ? ' ' : '') + (t.createdTime ? formatTime12(t.createdTime) : '');
+    var createdSubHtml = createdDisplay ? '<span class="job-task-sub">Created ' + escapeHtml(createdDisplay) + '</span>' : '';
+
     // Task's table is intentionally much simpler than the others — just
     // Job, Priority, Task Due, Ryan Review, Progress, Notes, Files, Updated.
     if (categoryOf(t) === 'task'){
       return '' +
       '<div class="job-row-wrap priority-' + priority + '">' +
-        '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + '" data-id="' + t.id + '">' +
+        '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + apptUrgencyClass(t) + '" data-id="' + t.id + '">' +
           '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
             moveButtonsHtml(t) +
             '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
@@ -3727,18 +3894,19 @@
                 '<span class="job-task-name' + (t.customer ? '' : ' placeholder') + '">' + (t.customer ? escapeHtml(t.customer) : 'Untitled job') + '</span>' +
                 dueFlagHtml +
               '</span>' +
+              createdSubHtml +
             '</span>' +
           '</div>' +
           '<div class="jc jc-priority">' +
-            '<select class="row-quick-select badge-select ' + priority + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
-              ['urgent','high','medium','low'].map(function(p){
+            '<select class="row-quick-select badge-select ' + (priority || 'none') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
+              ['', 'urgent','high','medium','low'].map(function(p){
                 return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
               }).join('') +
             '</select>' +
           '</div>' +
           '<div class="jc jc-due">' +
             (dtDisplay
-              ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
+              ? '<span class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
               : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>') +
           '</div>' +
           sentToCellHtml(t) +
@@ -3753,7 +3921,7 @@
 
     return '' +
     '<div class="job-row-wrap priority-' + priority + '">' +
-      '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + '" data-id="' + t.id + '">' +
+      '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + apptUrgencyClass(t) + '" data-id="' + t.id + '">' +
         '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
           moveButtonsHtml(t) +
           '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
@@ -3763,25 +3931,27 @@
               '<span class="job-task-name' + (t.customer ? '' : ' placeholder') + '">' + (t.customer ? escapeHtml(t.customer) : 'Untitled job') + '</span>' +
               dueFlagHtml +
             '</span>' +
+            createdSubHtml +
             (fullAddress(t) ? '<span class="job-task-sub">' + escapeHtml(fullAddress(t)) + '</span>' : '') +
           '</span>' +
         '</div>' +
         '<div class="jc jc-priority">' +
-          '<select class="row-quick-select badge-select ' + priority + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
-            ['urgent','high','medium','low'].map(function(p){
+          '<select class="row-quick-select badge-select ' + (priority || 'none') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
+            ['', 'urgent','high','medium','low'].map(function(p){
               return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
             }).join('') +
           '</select>' +
         '</div>' +
         '<div class="jc jc-due">' +
           (dtDisplay
-            ? '<span class="row-quick-edit ' + (isOverdue ? 'overdue-text' : '') + '" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
+            ? '<span class="add-datetime-btn ' + (isOverdue ? 'overdue-text' : '') + '" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
             : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>') +
         '</div>' +
+        (categoryOf(t) === 'residential' ? '<div class="jc jc-measure">' + rowMeasureCellHtml(t) + '</div>' : '') +
         (categoryOf(t) === 'commercial' ? '' : (
         '<div class="jc jc-estdue">' +
           (t.estimateDueDate
-            ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
+            ? '<span class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
             : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>') +
         '</div>')) +
         (categoryOf(t) === 'residential' ? '' : '<div class="jc jc-takeoff">' + rowStatusCellHtml(t, 'takeoffComplete') + '</div>') +
@@ -3792,9 +3962,6 @@
         '<div class="jc jc-manual">' + rowStatusCellHtml(t, 'manualCreated') + '</div>' +
         (categoryOf(t) === 'residential' ? sentToCellHtml(t) : '') +
         (categoryOf(t) === 'residential' ? '' : sentToCellHtml(t)) +
-        (categoryOf(t) === 'review'
-          ? '<div class="jc jc-submitted" onclick="event.stopPropagation()"><input type="checkbox" ' + (t.sentComplete ? 'checked' : '') + ' title="Submitted — moves this to Job Submitted" onchange="EP.updateField(\'' + t.id + '\',\'sentComplete\', this.checked)"></div>'
-          : '') +
         '<div class="jc jc-progress"><div class="tape small"><div class="tape-fill" style="width:' + pct + '%"></div></div><span class="progress-pct-sm">' + pct + '%</span></div>' +
         '<div class="jc jc-notes">' + (noteCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">📝</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">+ Add</button>') + '</div>' +
         '<div class="jc jc-files">' + (fileCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">📎 ' + fileCount + '</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">+ Add</button>') + '</div>' +
@@ -3866,45 +4033,34 @@
     var sortedReview = sortTasks(byCat.review);
     renderGroup('col-review', sortedReview, "Nothing waiting on Ryan right now.");
 
-    // Ryan Review's table holds a mix of job types, so its "due" columns
-    // relabel themselves — and Takeoff hides entirely — to match whichever
-    // job is most relevant right now: the one currently open, or otherwise
-    // whichever is at the top of the list.
-    (function(){
-      var dueLabel = document.getElementById('review-due-label');
-      var estdueLabel = document.getElementById('review-estdue-label');
-      var panel = document.querySelector('.group-panel[data-cat="review"]');
+    // Ryan Review and Job Submitted both hold a mix of job types, so the
+    // whole top row — column labels and which columns even show — follows
+    // whichever job is most relevant right now: the one currently open,
+    // or otherwise whichever is at the top of the list.
+    function updateMixedTableHeader(prefix, sortedList){
+      var dueLabel = document.getElementById(prefix + '-due-label');
+      var estdueLabel = document.getElementById(prefix + '-estdue-label');
+      var panel = document.querySelector('.group-panel[data-cat="' + prefix + '"]');
       if (!dueLabel || !estdueLabel) return;
-      var focusJob = sortedReview.find(function(t){ return expanded[t.id]; }) || sortedReview[0];
+      var focusJob = sortedList.find(function(t){ return expanded[t.id]; }) || sortedList[0];
       var jt = focusJob ? focusJob.jobType : '';
       if (jt === 'residential'){
         dueLabel.textContent = 'Arrival';
-        estdueLabel.textContent = 'Estimate Due';
       } else if (jt === 'commercial'){
         dueLabel.textContent = 'Bid Due / Time';
-        estdueLabel.textContent = 'Estimate Due';
       } else if (jt === 'task'){
         dueLabel.textContent = 'Task Due';
-        estdueLabel.textContent = 'Estimate Due';
       } else {
         dueLabel.textContent = 'Estimate Time / Date';
-        estdueLabel.textContent = 'Estimate Due';
       }
+      estdueLabel.textContent = 'Estimate Due';
       if (panel) panel.classList.toggle('hide-takeoff', jt === 'residential');
-    })();
+    }
+    updateMixedTableHeader('review', sortedReview);
 
     var sortedSentComplete = sortTasks(byCat.sentComplete);
     renderGroup('col-sentComplete', sortedSentComplete, "Nothing submitted yet.");
-
-    // Job Submitted is the same mix-of-job-types situation — Takeoff hides
-    // when the top (or currently open) job is Residential.
-    (function(){
-      var panel = document.querySelector('.group-panel[data-cat="sentComplete"]');
-      if (!panel) return;
-      var focusJob = sortedSentComplete.find(function(t){ return expanded[t.id]; }) || sortedSentComplete[0];
-      var jt = focusJob ? focusJob.jobType : '';
-      panel.classList.toggle('hide-takeoff', jt === 'residential');
-    })();
+    updateMixedTableHeader('sentComplete', sortedSentComplete);
 
     // Tracker 1: jobs currently on the board (everything not yet Sent Complete),
     // showing their average progress through the checklist.
