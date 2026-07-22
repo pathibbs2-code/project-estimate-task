@@ -149,8 +149,8 @@
   .header-minimize-btn{
     flex: none;
     font-family: 'Inter', sans-serif;
-    font-size: 11px; font-weight: 700;
-    padding: 6px 12px;
+    font-size: 12.5px; font-weight: 700;
+    padding: 7px 13px;
     border-radius: 999px;
     border: 1px solid var(--line);
     background: var(--bg);
@@ -159,6 +159,7 @@
     text-transform: uppercase;
     letter-spacing: .02em;
   }
+  .header-actions{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: none; }
   .header-minimize-btn:hover{ background: var(--blue-soft); color: var(--blue); }
   .page-heading-text h1{
     font-family: 'Archivo', sans-serif;
@@ -580,7 +581,6 @@
   .group-panel[data-cat="tracker"] .group-header{ border-left-color: var(--blue); }
   .group-panel[data-cat="residential"] .group-header{ border-left-color: #7A5C3E; }
   .group-panel[data-cat="commercial"] .group-header{ border-left-color: #5C5C8A; }
-  .group-panel[data-cat="task"] .group-header{ border-left-color: #2E8B8B; }
   .group-panel[data-cat="review"] .group-header{ border-left-color: var(--high); }
   .group-panel[data-cat="sentComplete"] .group-header{ border-left-color: var(--low); }
   .group-chevron{
@@ -601,6 +601,61 @@
     border-radius: 0;
   }
   .group-header-spacer{ flex: 1; }
+  .table-sort-select{
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px; font-weight: 600;
+    padding: 5px 22px 5px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .global-search-wrap{
+    position: relative;
+    margin: 0 0 14px;
+  }
+  .global-search-wrap input{
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    font-size: 14px;
+    background: #fff;
+  }
+  .search-results-dropdown{
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 40;
+  }
+  .search-results-dropdown.open{ display: block; }
+  .search-result-row{
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .search-result-row:last-child{ border-bottom: none; }
+  .search-result-row:hover{ background: var(--medium-soft); }
+  .search-result-name{ font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .search-result-cat{ font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-soft); }
+  .search-result-empty{ padding: 14px; font-size: 13px; color: var(--ink-soft); text-align: center; }
+  .modal-search-wrap{ margin-bottom: 4px; }
+  .modal-search-hint{ font-size: 11.5px; color: var(--ink-soft); margin: -4px 0 10px; }
+  @keyframes searchFlash{
+    0%, 100%{ box-shadow: inset 0 0 0 3px transparent; }
+    25%, 75%{ box-shadow: inset 0 0 0 3px var(--blue); }
+  }
+  .job-row.search-flash{ animation: searchFlash 2s ease-in-out; }
   .group-body{ border-top: 1px solid var(--line); }
   .group-body.collapsed{ display: none; }
 
@@ -612,31 +667,22 @@
   .job-table-scroll.dragging{ cursor: grabbing; user-select: none; }
   .job-table-head, .job-row, .job-row-wrap{
     width: 100%;
-    min-width: 1465px;
+    min-width: 1160px;
   }
   .job-table-head, .job-row{
     display: grid;
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-status) var(--col-sentto) 110px;
     gap: 10px;
     align-items: center;
-  }
-  .group-panel[data-cat="task"] .job-table-head,
-  .group-panel[data-cat="task"] .job-row,
-  .group-panel[data-cat="task"] .job-row-wrap{
-    min-width: 1065px;
-  }
-  .group-panel[data-cat="task"] .job-table-head,
-  .group-panel[data-cat="task"] .job-row{
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-sentto) var(--col-progress) 60px 60px 110px;
   }
   .group-panel[data-cat="residential"] .job-table-head,
   .group-panel[data-cat="residential"] .job-row,
   .group-panel[data-cat="residential"] .job-row-wrap{
-    min-width: 1480px;
+    min-width: 1060px;
   }
   .group-panel[data-cat="residential"] .job-table-head,
   .group-panel[data-cat="residential"] .job-row{
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-status) var(--col-estdue) var(--col-status) var(--col-status) var(--col-sentto) var(--col-progress) 60px 60px 110px;
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue) var(--col-status) var(--col-status) var(--col-sentto) 110px;
   }
   .jc-sentto{ display: flex; align-items: center; justify-content: center; }
   .add-datetime-btn{
@@ -765,6 +811,37 @@
   .job-move-buttons button:hover{ background: var(--blue-soft); color: var(--blue); }
   .job-task-text{ min-width: 0; overflow: hidden; }
   .job-task-name-row{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .job-name-icons{ display: flex; align-items: center; gap: 8px; margin-left: auto; padding-left: 6px; flex-shrink: 0; }
+  .job-name-divider{ width: 1px; height: 22px; background: var(--line); margin-right: 2px; flex-shrink: 0; }
+  .job-icon-btn{
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    width: 27px; height: 27px;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .job-icon-btn:hover{ background: var(--medium-soft); border-color: var(--medium); }
+  .job-icon-plus{
+    position: absolute; bottom: -4px; right: -4px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: var(--medium); color: #fff;
+    font-size: 9px; font-weight: 800; line-height: 12px; text-align: center;
+    border: 1.5px solid #fff;
+  }
+  .job-icon-count{
+    position: absolute; top: -5px; right: -5px;
+    min-width: 14px; height: 14px; padding: 0 3px;
+    border-radius: 999px;
+    background: var(--urgent); color: #fff;
+    font-size: 9px; font-weight: 800; line-height: 14px; text-align: center;
+    border: 1.5px solid #fff;
+  }
   .job-task-name{
     display: inline-block;
     font-weight: 700;
@@ -813,6 +890,9 @@
     padding: 11px 16px;
     font-size: 12.5px;
     border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .job-table-addrow-link{
     display: inline-block;
@@ -826,6 +906,20 @@
     letter-spacing: .02em;
   }
   .job-table-addrow-link:hover{ background: var(--blue-soft); }
+  .talk-add-job-btn{
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px; font-weight: 700;
+    padding: 7px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: var(--medium-soft); color: var(--medium); border: 1px solid var(--medium);
+  }
+  .talk-add-job-btn:hover{ filter: brightness(0.96); }
+  .talk-add-job-btn.recording{
+    background: var(--urgent); color: #fff; border-color: var(--urgent);
+    animation: alarm-flash 1s ease-in-out infinite;
+  }
 
   .empty-state{
     margin: 14px 16px;
@@ -1058,7 +1152,6 @@
   .status-select.status-in_progress{ background: #FFF6D6; color: #9A7B00; border-color: #D4B106; }
   .status-select.status-completed{ background: var(--low-soft); color: var(--low); border-color: var(--low); }
   .status-select.status-na{ background: #EDE7F6; color: #6A4C9C; border-color: #8862C4; }
-  .status-select.status-not_complete{ background: var(--urgent-soft); color: var(--urgent); border-color: var(--urgent); }
 
   .notes-preview{
     min-height: 60px;
@@ -1205,6 +1298,61 @@
     border-color: var(--urgent);
     animation: alarm-flash 1s ease-in-out infinite;
   }
+  .voice-log-block{
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: #FAFAF8;
+  }
+  .voice-log-header{
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .voice-log-title{ font-size: 12.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+  .voice-log-btn{
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px; font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: var(--medium-soft); color: var(--medium); border: 1px solid var(--medium);
+  }
+  .voice-log-btn.recording{
+    background: var(--urgent); color: #fff; border-color: var(--urgent);
+    animation: alarm-flash 1s ease-in-out infinite;
+  }
+  .voice-log-live{
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    min-height: 18px;
+  }
+  .voice-log-transcript{
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    white-space: pre-wrap;
+  }
+  .voice-log-meta{ font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+  .voice-log-hint{ font-size: 11.5px; color: var(--ink-soft); margin-top: 6px; }
+  .submission-log-box{ width: 340px; max-width: 90vw; }
+  .submission-log-list{ padding: 6px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .submission-log-row{
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #FAFAF8;
+  }
+  .submission-log-label{ font-size: 13px; font-weight: 700; color: var(--ink); }
+  .submission-log-time{ font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; }
+  .submission-log-empty{ font-size: 13px; color: var(--ink-soft); text-align: center; padding: 20px; }
   .notes-editor{
     flex: 1;
     overflow-y: auto;
@@ -1397,7 +1545,15 @@
         <div class="category-subtext">MEASURE &middot; TAKEOFF &middot; ESTIMATE &middot; RESIDENTIAL &middot; COMMERCIAL</div>
       </div>
       <img class="page-heading-logo-img" alt="Sutton Flooring" src="data:image/png;base64,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">
-      <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
+      <div class="header-actions">
+        <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
+        <button type="button" class="header-minimize-btn talk-add-job-btn" onclick="EP.talkAddJob('residential')" title="Talk a new job in">🎙️ Talk Add Job</button>
+      </div>
+    </div>
+
+    <div class="global-search-wrap">
+      <input type="text" id="global-search-input" placeholder="Search all jobs — name, address, phone, email, dates…" autocomplete="off" oninput="EP.runGlobalSearch(this.value)" onfocus="EP.runGlobalSearch(this.value)" onblur="EP.hideGlobalSearchSoon()">
+      <div class="search-results-dropdown" id="global-search-results"></div>
     </div>
 
     <div class="overall-wrap overall-wrap-compact">
@@ -1503,6 +1659,16 @@
     </div>
   </div>
 
+  <div class="date-picker-overlay" id="submission-log-overlay" onclick="if(event.target===this) EP.closeSubmissionLog()">
+    <div class="date-picker-box submission-log-box">
+      <div class="date-picker-header">
+        <span>Submission Log</span>
+        <button class="notes-modal-close" onclick="EP.closeSubmissionLog()">&#10005;</button>
+      </div>
+      <div class="submission-log-list" id="submission-log-list"></div>
+    </div>
+  </div>
+
   <div class="date-picker-overlay" id="assign-picker-overlay" onclick="if(event.target===this) EP.closeAssignPicker()">
     <div class="date-picker-box">
       <div class="date-picker-header">
@@ -1551,16 +1717,17 @@
         <button class="notes-modal-close" onclick="EP.closeAddJobModal()">&#10005;</button>
       </div>
       <div class="add-job-modal-body">
+      <div class="modal-search-wrap">
+        <input type="text" id="modal-search-input" placeholder="Search existing jobs first…" autocomplete="off" oninput="EP.runModalSearch(this.value)" onblur="EP.hideModalSearchSoon()">
+        <div class="search-results-dropdown" id="modal-search-results"></div>
+      </div>
+      <div class="modal-search-hint">Find an existing job above, or fill in the form below to create a new one.</div>
       <div class="jobtype-picker" id="new-jobtype-picker">
         <button type="button" class="jobtype-picker-btn selected" data-type="residential" onclick="EP.setNewJobType('residential')">Residential</button>
         <button type="button" class="jobtype-picker-btn" data-type="commercial" onclick="EP.setNewJobType('commercial')">Commercial</button>
-        <button type="button" class="jobtype-picker-btn" data-type="task" onclick="EP.setNewJobType('task')">Task</button>
       </div>
       <input type="hidden" id="new-jobtype" value="residential">
       <input type="text" id="new-customer" placeholder="Customer / job name…" autocomplete="off">
-      <div class="notes-preview" id="new-task-description-trigger" style="display:none;" onclick="EP.openTaskDescriptionForNew()">
-        <span class="notes-placeholder">Click to write the task description…</span>
-      </div>
       <div id="new-address-wrap">
         <div class="address-field-wrap">
           <input type="text" id="new-address" placeholder="Street address — start typing for suggestions…" autocomplete="off" oninput="EP.searchNewAddress(this.value)" onpaste="setTimeout(function(){ EP.autofillNewAddress(); }, 0)" onchange="EP.autofillNewAddress()" onblur="EP.hideNewAddressSuggestionsSoon()">
@@ -1594,7 +1761,6 @@
       </div>
       </div>
       <div class="add-job-modal-actions">
-        <span class="hint" id="new-task-footer-hint" style="display:none;">Click the description above to create this task.</span>
         <button class="btn ghost" onclick="EP.closeAddJobModal()">Cancel</button>
         <button class="btn" id="add-btn">+ Add job</button>
       </div>
@@ -1606,7 +1772,7 @@
       <div class="group-header" onclick="EP.toggleGroup('residential')">
         <span class="group-chevron" id="chev-residential">&#9662;</span>
         <span class="group-title">Residential</span>
-        <span class="badge-count" id="count-residential">0</span><span class="group-header-spacer"></span>
+        <span class="badge-count" id="count-residential">0</span><span class="group-header-spacer"></span><select class="table-sort-select" onclick="event.stopPropagation()" onchange="EP.setSortMode('residential', this.value)"><option value="importance">Sort: Importance</option><option value="name-asc">Job Name (A–Z)</option><option value="name-desc">Job Name (Z–A)</option><option value="date-asc">Date Added (Oldest)</option><option value="date-desc">Date Added (Newest)</option></select>
       </div>
       <div class="group-body" id="groupbody-residential">
         <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
@@ -1615,26 +1781,22 @@
             <div class="jc jc-task">Job</div>
             <div class="jc jc-priority">Priority</div>
             <div class="jc jc-due">Estimate Time / Date</div>
-            <div class="jc jc-measure">Measure</div>
             <div class="jc jc-estdue">Estimate Due</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
             <div class="jc jc-sentto">Sent To</div>
-            <div class="jc jc-progress">Progress</div>
-            <div class="jc jc-notes">Notes</div>
-            <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-residential"></div>
         </div>
-        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span></div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span><button type="button" class="talk-add-job-btn" onclick="EP.talkAddJob('residential')">🎙️ Talk Add Job</button></div>
       </div>
     </div>
     <div class="group-panel" data-cat="commercial">
       <div class="group-header" onclick="EP.toggleGroup('commercial')">
         <span class="group-chevron" id="chev-commercial">&#9662;</span>
         <span class="group-title">Commercial</span>
-        <span class="badge-count" id="count-commercial">0</span><span class="group-header-spacer"></span>
+        <span class="badge-count" id="count-commercial">0</span><span class="group-header-spacer"></span><select class="table-sort-select" onclick="event.stopPropagation()" onchange="EP.setSortMode('commercial', this.value)"><option value="importance">Sort: Importance</option><option value="name-asc">Job Name (A–Z)</option><option value="name-desc">Job Name (Z–A)</option><option value="date-asc">Date Added (Oldest)</option><option value="date-desc">Date Added (Newest)</option></select>
       </div>
       <div class="group-body" id="groupbody-commercial">
         <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
@@ -1648,45 +1810,18 @@
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
             <div class="jc jc-sentto">Sent To</div>
-            <div class="jc jc-progress">Progress</div>
-            <div class="jc jc-notes">Notes</div>
-            <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-commercial"></div>
         </div>
-        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('commercial')">+ Add Job</span></div>
-      </div>
-    </div>
-    <div class="group-panel" data-cat="task">
-      <div class="group-header" onclick="EP.toggleGroup('task')">
-        <span class="group-chevron" id="chev-task">&#9662;</span>
-        <span class="group-title">Task</span>
-        <span class="badge-count" id="count-task">0</span><span class="group-header-spacer"></span>
-      </div>
-      <div class="group-body" id="groupbody-task">
-        <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
-        <div class="job-table-scroll">
-          <div class="job-table-head">
-            <div class="jc jc-task">Job</div>
-            <div class="jc jc-priority">Priority</div>
-            <div class="jc jc-due">Task Due</div>
-            <div class="jc jc-sentto">Sent To</div>
-            <div class="jc jc-progress">Progress</div>
-            <div class="jc jc-notes">Notes</div>
-            <div class="jc jc-files">Files</div>
-            <div class="jc jc-updated">Updated</div>
-          </div>
-          <div id="col-task"></div>
-        </div>
-        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('task')">+ Add Task</span></div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('commercial')">+ Add Job</span><button type="button" class="talk-add-job-btn" onclick="EP.talkAddJob('commercial')">🎙️ Talk Add Job</button></div>
       </div>
     </div>
     <div class="group-panel" data-cat="review">
       <div class="group-header" onclick="EP.toggleGroup('review')">
         <span class="group-chevron" id="chev-review">&#9662;</span>
         <span class="group-title">Ryan Review</span>
-        <span class="badge-count" id="count-review">0</span><span class="group-header-spacer"></span>
+        <span class="badge-count" id="count-review">0</span><span class="group-header-spacer"></span><select class="table-sort-select" onclick="event.stopPropagation()" onchange="EP.setSortMode('review', this.value)"><option value="importance">Sort: Importance</option><option value="name-asc">Job Name (A–Z)</option><option value="name-desc">Job Name (Z–A)</option><option value="date-asc">Date Added (Oldest)</option><option value="date-desc">Date Added (Newest)</option></select>
       </div>
       <div class="group-body" id="groupbody-review">
         <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
@@ -1700,42 +1835,36 @@
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
             <div class="jc jc-sentto">Sent To</div>
-            <div class="jc jc-progress">Progress</div>
-            <div class="jc jc-notes">Notes</div>
-            <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-review"></div>
         </div>
-        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span></div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span><button type="button" class="talk-add-job-btn" onclick="EP.talkAddJob('residential')">🎙️ Talk Add Job</button></div>
       </div>
     </div>
     <div class="group-panel" data-cat="sentComplete">
       <div class="group-header" onclick="EP.toggleGroup('sentComplete')">
         <span class="group-chevron" id="chev-sentComplete">&#9662;</span>
         <span class="group-title">Job Submitted</span>
-        <span class="badge-count" id="count-sentComplete">0</span><span class="group-header-spacer"></span>
+        <span class="badge-count" id="count-sentComplete">0</span><span class="group-header-spacer"></span><select class="table-sort-select" onclick="event.stopPropagation()" onchange="EP.setSortMode('sentComplete', this.value)"><option value="importance">Sort: Importance</option><option value="name-asc">Job Name (A–Z)</option><option value="name-desc">Job Name (Z–A)</option><option value="date-asc">Date Added (Oldest)</option><option value="date-desc">Date Added (Newest)</option></select>
       </div>
       <div class="group-body" id="groupbody-sentComplete">
         <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
         <div class="job-table-scroll">
           <div class="job-table-head">
             <div class="jc jc-task">Job</div>
-            <div class="jc jc-priority">Priority</div>
+            <div class="jc jc-priority">Logged Submission</div>
             <div class="jc jc-due" id="sentComplete-due-label">Estimate Time / Date</div>
             <div class="jc jc-estdue" id="sentComplete-estdue-label">Estimate Due</div>
             <div class="jc jc-takeoff">Takeoff</div>
             <div class="jc jc-quote">Quote</div>
             <div class="jc jc-manual">Manual</div>
             <div class="jc jc-sentto">Sent To</div>
-            <div class="jc jc-progress">Progress</div>
-            <div class="jc jc-notes">Notes</div>
-            <div class="jc jc-files">Files</div>
             <div class="jc jc-updated">Updated</div>
           </div>
           <div id="col-sentComplete"></div>
         </div>
-        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span></div>
+        <div class="job-table-addrow"><button type="button" id="talk-change-update-btn" class="talk-add-job-btn" onclick="EP.talkChangeUpdate()">🎙️ Talk-Change-Update</button></div>
       </div>
     </div>
   </div>
@@ -1833,7 +1962,6 @@
   ];
 
   var FIELD_LABELS = {
-    measureComplete: "Measure Complete",
     takeoffComplete: "Takeoff Complete",
     estimateComplete: "Estimate Complete",
     manualCreated: "Manual Created",
@@ -1879,12 +2007,10 @@
   var DEFAULT_CHECK_KEYS = ["takeoffComplete", "quoteComplete", "manualCreated", "ryanReview", "sentComplete"];
   var RESIDENTIAL_CHECK_KEYS = ["quoteComplete", "manualCreated", "ryanReview", "estimatorReview", "sentComplete"];
   var COMMERCIAL_CHECK_KEYS = ["takeoffComplete", "contactRepsPricing", "quoteComplete", "manualCreated", "ryanReview", "estimatorReview", "sentComplete"];
-  var TASK_CHECK_KEYS = ["estimatorReview", "ryanReview", "sentComplete"];
 
   function checklistFor(t){
     var keys = t.jobType === "residential" ? RESIDENTIAL_CHECK_KEYS
       : t.jobType === "commercial" ? COMMERCIAL_CHECK_KEYS
-      : t.jobType === "task" ? TASK_CHECK_KEYS
       : DEFAULT_CHECK_KEYS;
     return keys.map(function(k){ return { key: k, label: FIELD_LABELS[k] }; });
   }
@@ -2054,11 +2180,6 @@
   function openContactInfoModal(taskId){
     var t = tasks.find(function(x){ return x.id === taskId; });
     if (!t) return;
-    if (t.jobType === 'task'){
-      // Tasks don't have contact fields — their "name" lives in the notes/subject flow instead.
-      openNotesEditor(taskId);
-      return;
-    }
     contactModalTaskId = taskId;
     document.getElementById('contact-customer').value = t.customer || '';
     document.getElementById('contact-address').value = t.address || '';
@@ -2261,7 +2382,6 @@
       dueTime: "",
       estimateArrivalTime: "",
       estimateDueDate: "",
-      measureComplete: "",
       takeoffComplete: "not_started",
       estimateComplete: "not_started",
       manualCreated: "not_started",
@@ -2277,6 +2397,9 @@
       createdAt: Date.now(),
       createdDate: todayISO(),
       createdTime: pad2(new Date().getHours()) + ':' + pad2(new Date().getMinutes()),
+      voiceLog: "",
+      voiceLogAt: null,
+      submissionLog: [],
       updatedAt: Date.now(),
       manualOrder: Date.now()
     };
@@ -2284,13 +2407,12 @@
 
   function categoryOf(t){
     if (t.sentComplete) return "sentComplete";
-    if (t.estimatorReview && (t.jobType === "residential" || t.jobType === "commercial" || t.jobType === "task")){
+    if (t.estimatorReview && (t.jobType === "residential" || t.jobType === "commercial")){
       return t.jobType;
     }
     if (t.ryanReview) return "review";
     if (t.jobType === "residential") return "residential";
     if (t.jobType === "commercial") return "commercial";
-    if (t.jobType === "task") return "task";
     return "tracker";
   }
 
@@ -3000,22 +3122,15 @@
     if (hidden) hidden.value = type;
     var buttons = document.querySelectorAll('#new-jobtype-picker .jobtype-picker-btn');
     buttons.forEach(function(b){ b.classList.toggle('selected', b.getAttribute('data-type') === type); });
-    var isTask = type === 'task';
-    var customerInput = document.getElementById('new-customer');
-    var descTrigger = document.getElementById('new-task-description-trigger');
-    if (customerInput) customerInput.style.display = isTask ? 'none' : '';
-    if (descTrigger) descTrigger.style.display = isTask ? 'block' : 'none';
-    var contactWrap = document.getElementById('new-address-wrap');
-    if (contactWrap) contactWrap.style.display = isTask ? 'none' : '';
-    var addBtn = document.getElementById('add-btn');
-    var footerHint = document.getElementById('new-task-footer-hint');
-    if (addBtn) addBtn.style.display = isTask ? 'none' : '';
-    if (footerHint) footerHint.style.display = isTask ? 'inline' : 'none';
   }
 
   function openAddJobModal(presetType){
     setNewJobType(presetType || 'residential');
     document.getElementById('add-job-modal-overlay').classList.add('open');
+    var searchEl = document.getElementById('modal-search-input');
+    if (searchEl) searchEl.value = '';
+    var resultsEl = document.getElementById('modal-search-results');
+    if (resultsEl){ resultsEl.innerHTML = ''; resultsEl.classList.remove('open'); }
     setTimeout(function(){
       var el = document.getElementById('new-customer');
       if (el) el.focus();
@@ -3087,8 +3202,8 @@
       }
       knownAssignments[id] = value;
       // Reassigning to one of the team means the job is back in active
-      // work — send it back to its home table (Residential/Commercial/
-      // Task) if it was sitting in Ryan Review or Job Submitted.
+      // work — send it back to its home table (Residential/Commercial)
+      // if it was sitting in Ryan Review or Job Submitted.
       if (value === 'Pat' || value === 'Damon' || value === 'Ryan'){
         t.ryanReview = false;
         t.estimatorReview = false;
@@ -3123,6 +3238,9 @@
         t.estimatorReview = false;
         t.priority = '';
         t.justReassigned = false;
+        if (!t.submissionLog) t.submissionLog = [];
+        var alreadySubmittedOnce = t.submissionLog.some(function(e){ return e.type === 'submitted'; });
+        t.submissionLog.push({ type: alreadySubmittedOnce ? 'resubmitted' : 'submitted', at: Date.now() });
       }
     }
     if (key === 'estimatorReview' && value === true){
@@ -3193,60 +3311,25 @@
 
   // ---------- Rich text notes editor ----------
   var notesEditingTaskId = null;
-  var pendingNewTaskId = null; // set when a Task was auto-created by clicking its description in the Add Job modal
 
   function openNotesEditor(taskId){
     var t = tasks.find(function(x){ return x.id === taskId; });
     if (!t) return;
     notesEditingTaskId = taskId;
-    var isTaskItem = t.jobType === 'task';
-    document.getElementById('notes-modal-title').textContent = isTaskItem
-      ? ((t.customer || 'Untitled task') + ' — Task')
-      : ((t.customer || 'Untitled job') + ' — Notes');
+    document.getElementById('notes-modal-title').textContent = (t.customer || 'Untitled job') + ' — Notes';
     document.getElementById('notes-editor').innerHTML = linkifyHtml(t.notes || '', false);
     var subjectWrap = document.getElementById('notes-subject-wrap');
     var subjectInput = document.getElementById('notes-subject-input');
     var subjectWarning = document.getElementById('notes-subject-warning');
     subjectWarning.classList.remove('show');
     subjectInput.classList.remove('blink-warning');
-    if (isTaskItem){
-      subjectWrap.style.display = 'block';
-      subjectInput.value = t.customer || '';
-    } else {
-      subjectWrap.style.display = 'none';
-      subjectInput.value = '';
-    }
+    subjectWrap.style.display = 'none';
+    subjectInput.value = '';
     document.getElementById('notes-modal-overlay').classList.add('open');
     refreshNotesFilesCount();
   }
 
-  // Clicking "Description of task" in the Add Job popup creates the real task
-  // right away (same as anything else in the Task category), then opens the
-  // normal notes/subject editor scoped to it. If they cancel out without
-  // saving, the just-created placeholder task is rolled back so nothing
-  // empty gets left on the board.
-  function openTaskDescriptionForNew(){
-    if (pendingNewTaskId && tasks.some(function(x){ return x.id === pendingNewTaskId; })){
-      openNotesEditor(pendingNewTaskId);
-      return;
-    }
-    var prioritySel = document.getElementById('new-priority');
-    var assignSel = document.getElementById('new-assign');
-    var t = blankTask('', prioritySel.value, '', '', '', '', '', '', 'task', assignSel.value);
-    tasks.push(t);
-    pendingNewTaskId = t.id;
-    scheduleSave();
-    closeAddJobModal();
-    openNotesEditor(t.id);
-  }
-
   function closeNotesEditor(){
-    // Roll back an auto-created Task if it's being closed without saving.
-    if (pendingNewTaskId && notesEditingTaskId === pendingNewTaskId){
-      tasks = tasks.filter(function(x){ return x.id !== pendingNewTaskId; });
-      pendingNewTaskId = null;
-      scheduleSave();
-    }
     document.getElementById('notes-modal-overlay').classList.remove('open');
     notesEditingTaskId = null;
     if (notesRecognition && notesRecognizing) notesRecognition.stop();
@@ -3277,36 +3360,10 @@
     el.textContent = n ? (n + (n === 1 ? ' file attached' : ' files attached')) : 'No files attached yet';
   }
 
-  function flagMissingSubject(){
-    var input = document.getElementById('notes-subject-input');
-    var warning = document.getElementById('notes-subject-warning');
-    input.classList.remove('blink-warning');
-    void input.offsetWidth; // restart the animation if it's already been triggered once
-    input.classList.add('blink-warning');
-    warning.classList.add('show');
-    input.focus();
-    setTimeout(function(){
-      input.classList.remove('blink-warning');
-    }, 1900);
-  }
-
   function saveNotesEditor(){
     if (!notesEditingTaskId) return;
-    var subjectWrap = document.getElementById('notes-subject-wrap');
-    var subjectInput = document.getElementById('notes-subject-input');
-    if (subjectWrap.style.display !== 'none'){
-      var subject = subjectInput.value.trim();
-      if (!subject){
-        flagMissingSubject();
-        return;
-      }
-    }
     var html = document.getElementById('notes-editor').innerHTML;
     updateField(notesEditingTaskId, 'notes', html);
-    if (subjectWrap.style.display !== 'none'){
-      updateField(notesEditingTaskId, 'customer', subjectInput.value.trim());
-    }
-    if (notesEditingTaskId === pendingNewTaskId) pendingNewTaskId = null; // confirmed — no rollback on close now
     closeNotesEditor();
   }
 
@@ -3358,6 +3415,276 @@
       }
     };
     try{ notesRecognition.start(); } catch(e){ /* already running or blocked — ignore */ }
+  }
+
+  // ---------- Voice Log: dictate a job, keyword-match it into fields ----------
+  // Tap the mic, talk naturally, say "send" (or tap Send) when done. The
+  // raw transcript is saved on the job as a log — nothing is ever silently
+  // discarded — and then scanned for the same vocabulary already used
+  // everywhere else in the app (job types, priorities, status values,
+  // Sent To names, and the Customer/Address/Phone/Email fields) to fill
+  // in whatever it recognizes. A toast confirms exactly what got set so
+  // nothing changes without you seeing it.
+  var voiceLogRecognition = null;
+  var voiceLogRecognizing = false;
+  var voiceLogTaskId = null;
+  var voiceLogParts = [];
+
+  // The two ways to add a job: tap "+ Add Job" and fill in the form, or
+  // tap "Talk Add Job" and just say it — this creates a blank job of the
+  // right type, opens it, and immediately starts the same Voice Log
+  // capture used to update any existing job.
+  function talkAddJob(jobType){
+    var t = blankTask('', '', '', '', '', '', '', '', jobType, '');
+    tasks.push(t);
+    Object.keys(expanded).forEach(function(k){ expanded[k] = false; });
+    expanded[t.id] = true;
+    scheduleSave();
+    render();
+    setTimeout(function(){
+      var rowEl = document.querySelector('.job-row[data-id="' + t.id + '"]');
+      if (rowEl) rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      voiceLogToggle(t.id);
+    }, 120);
+  }
+
+  // Job Submitted isn't a place to create new jobs — everything there
+  // arrived via automation. So instead of "Talk Add Job", this button lets
+  // you talk to an EXISTING submitted job: say its name plus whatever
+  // needs changing (e.g. "Smith job, send to customer"), say "send", and
+  // it finds the matching job in Job Submitted and applies the update —
+  // same keyword parser as the regular Voice Log.
+  var talkChangeRecognition = null;
+  var talkChangeRecognizing = false;
+  var talkChangeParts = [];
+
+  function talkChangeUpdate(){
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var btn = document.getElementById('talk-change-update-btn');
+    if (!SpeechRec){
+      showToast("🎙️ Voice dictation isn't supported in this browser — try Chrome or Edge.");
+      return;
+    }
+    if (talkChangeRecognizing){
+      if (talkChangeRecognition) talkChangeRecognition.stop();
+      return;
+    }
+    talkChangeParts = [];
+    talkChangeRecognition = new SpeechRec();
+    talkChangeRecognition.continuous = true;
+    talkChangeRecognition.interimResults = false;
+    talkChangeRecognition.lang = 'en-US';
+    talkChangeRecognition.onstart = function(){
+      talkChangeRecognizing = true;
+      if (btn){ btn.classList.add('recording'); btn.textContent = '⏹ Listening — name the job & say the change'; }
+    };
+    talkChangeRecognition.onend = function(){
+      talkChangeRecognizing = false;
+      if (btn){ btn.classList.remove('recording'); btn.textContent = '🎙️ Talk-Change-Update'; }
+      finishTalkChangeUpdate();
+    };
+    talkChangeRecognition.onerror = function(){
+      talkChangeRecognizing = false;
+      if (btn){ btn.classList.remove('recording'); btn.textContent = '🎙️ Talk-Change-Update'; }
+    };
+    talkChangeRecognition.onresult = function(e){
+      for (var i = e.resultIndex; i < e.results.length; i++){
+        if (e.results[i].isFinal){
+          var chunk = e.results[i][0].transcript;
+          talkChangeParts.push(chunk.trim());
+          if (/\bsend\b/i.test(chunk)) talkChangeRecognition.stop();
+        }
+      }
+    };
+    try{ talkChangeRecognition.start(); } catch(e){ /* already running or blocked — ignore */ }
+  }
+
+  function finishTalkChangeUpdate(){
+    var transcript = talkChangeParts.join(' ').replace(/\bsend\b\s*$/i, '').trim();
+    talkChangeParts = [];
+    if (!transcript) return;
+    var lower = transcript.toLowerCase();
+    var candidates = tasks.filter(function(t){ return categoryOf(t) === 'sentComplete' && t.customer; });
+    var match = candidates.find(function(t){ return lower.indexOf(t.customer.toLowerCase()) !== -1; });
+    if (!match){
+      showToast('🎙️ Didn\'t catch which submitted job you meant — say its name clearly, e.g. "Smith job, send to customer".');
+      return;
+    }
+    match.voiceLog = transcript;
+    match.voiceLogAt = Date.now();
+    var changes = parseVoiceLog(match, transcript);
+    scheduleSave();
+    render();
+    showToast(changes.length
+      ? ('🎙️ Updated ' + match.customer + ': ' + changes.join(' · '))
+      : ('🎙️ Logged on ' + match.customer + ' — nothing recognized to change.'));
+  }
+
+  function voiceLogToggle(taskId){
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec){
+      showToast("🎙️ Voice dictation isn't supported in this browser — try Chrome or Edge.");
+      return;
+    }
+    if (voiceLogRecognizing){
+      if (voiceLogRecognition) voiceLogRecognition.stop();
+      return;
+    }
+    voiceLogTaskId = taskId;
+    voiceLogParts = [];
+    voiceLogRecognition = new SpeechRec();
+    voiceLogRecognition.continuous = true;
+    voiceLogRecognition.interimResults = true;
+    voiceLogRecognition.lang = 'en-US';
+    voiceLogRecognition.onstart = function(){
+      voiceLogRecognizing = true;
+      render();
+    };
+    voiceLogRecognition.onend = function(){
+      voiceLogRecognizing = false;
+      finishVoiceLog();
+    };
+    voiceLogRecognition.onerror = function(){
+      voiceLogRecognizing = false;
+      render();
+    };
+    voiceLogRecognition.onresult = function(e){
+      var interim = '';
+      var stopNow = false;
+      for (var i = e.resultIndex; i < e.results.length; i++){
+        var chunk = e.results[i][0].transcript;
+        if (e.results[i].isFinal){
+          voiceLogParts.push(chunk.trim());
+          if (/\bsend\b/i.test(chunk)) stopNow = true;
+        } else {
+          interim = chunk;
+        }
+      }
+      var liveEl = document.getElementById('voice-log-live-' + voiceLogTaskId);
+      if (liveEl) liveEl.textContent = voiceLogParts.join(' ') + ' ' + interim;
+      if (stopNow) voiceLogRecognition.stop(); // spoken "send" — hands-free stop
+    };
+    try{ voiceLogRecognition.start(); } catch(e){ /* already running or blocked — ignore */ }
+  }
+
+  function finishVoiceLog(){
+    var taskId = voiceLogTaskId;
+    voiceLogTaskId = null;
+    var transcript = voiceLogParts.join(' ').replace(/\bsend\b\s*$/i, '').trim();
+    voiceLogParts = [];
+    if (!taskId){ render(); return; }
+    var t = tasks.find(function(x){ return x.id === taskId; });
+    if (!t){ render(); return; }
+    if (!transcript){ render(); return; }
+    t.voiceLog = transcript;
+    t.voiceLogAt = Date.now();
+    var changes = parseVoiceLog(t, transcript);
+    scheduleSave();
+    render();
+    showToast(changes.length
+      ? ('🎙️ Set from voice: ' + changes.join(' · '))
+      : "🎙️ Logged — didn't catch any recognizable fields. Check the voice log below.");
+  }
+
+  // Scans a transcript for the same vocabulary already used across the
+  // app (job types, PRIORITY_LABEL, STATUS_OPTIONS, SENT_TO_OPTIONS) and
+  // applies whatever it finds through the normal updateField() path, so
+  // every existing automation (routing, priority reset, etc.) still fires
+  // exactly as if it had been clicked by hand.
+  function parseVoiceLog(t, transcriptRaw){
+    var text = ' ' + transcriptRaw.toLowerCase().replace(/[^\w\s@.,'\-\/]/g, ' ') + ' ';
+    var changes = [];
+
+    function apply(key, value, label){
+      updateField(t.id, key, value);
+      changes.push(label);
+    }
+
+    function grab(triggerWords, stopWords){
+      var stopGroup = stopWords.join('|');
+      for (var i = 0; i < triggerWords.length; i++){
+        var re = new RegExp('\\b' + triggerWords[i] + '\\b\\s*(?:is|:)?\\s*([a-z0-9][a-z0-9 ,.\'\\-@\\/]*?)(?=\\s+\\b(?:' + stopGroup + ')\\b|$)', 'i');
+        var m = text.match(re);
+        if (m && m[1].trim()) return m[1].trim().replace(/[.,]+$/, '');
+      }
+      return null;
+    }
+
+    var fieldTriggers = ['priority', 'address', 'phone', 'email', 'send to', 'sent to', 'quote', 'manual', 'takeoff', 'rep price', 'residential', 'commercial', 'customer', 'job name', 'send'];
+
+    // Job type
+    var jt = /\bresidential\b/.test(text) ? 'residential' : /\bcommercial\b/.test(text) ? 'commercial' : null;
+    if (jt && jt !== t.jobType){
+      apply('jobType', jt, 'Job Type → ' + jt.charAt(0).toUpperCase() + jt.slice(1));
+    }
+
+    // Priority
+    var prMatch = text.match(/priority\s*(?:is|to|of|set to)?\s*(urgent|high|medium|low)\b/) || text.match(/\b(urgent|high|medium|low)\s*priority\b/);
+    if (prMatch){
+      apply('priority', prMatch[1], 'Priority → ' + PRIORITY_LABEL[prMatch[1]]);
+    }
+
+    // Status-style fields: Quote, Manual, Takeoff, Rep Price
+    var statusFields = [
+      { triggers: ['quote'], key: 'quoteComplete', label: 'Quote' },
+      { triggers: ['manual'], key: 'manualCreated', label: 'Manual' },
+      { triggers: ['takeoff'], key: 'takeoffComplete', label: 'Takeoff' },
+      { triggers: ['rep price', 'rep pricing', 'pricing'], key: 'contactRepsPricing', label: 'Rep Price' }
+    ];
+    statusFields.forEach(function(f){
+      f.triggers.forEach(function(trig){
+        var re = new RegExp('\\b' + trig + '\\b\\s*(?:is|status|set to)?\\s*(not started|in progress|completed|complete|n\\s?\\/?\\s?a)\\b');
+        var m = text.match(re);
+        if (!m) return;
+        var raw = m[1].replace(/\s+/g, ' ').trim();
+        var value = raw === 'not started' ? 'not_started'
+          : raw === 'in progress' ? 'in_progress'
+          : (raw === 'completed' || raw === 'complete') ? 'completed'
+          : 'na';
+        apply(f.key, value, f.label + ' → ' + STATUS_LABEL[value]);
+      });
+    });
+
+    // Sent To
+    var stMatch = text.match(/\bsen[dt]\b\s*(?:it|this|the job)?\s*to\s*(ryan review|ryan|pat|damon|jen|elaine|brad|emert|customer|job submitted)\b/);
+    if (stMatch){
+      var raw = stMatch[1] === 'ryan' ? 'ryan review' : stMatch[1];
+      var opt = SENT_TO_OPTIONS.find(function(o){ return o.label.toLowerCase() === raw; });
+      if (opt) apply('sentTo', opt.value, 'Sent To → ' + opt.label);
+    }
+
+    // Customer / Job name
+    var custRaw = grab(['customer', 'job name'], fieldTriggers);
+    if (custRaw){
+      var custName = custRaw.replace(/\s+/g, ' ').trim().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      apply('customer', custName, 'Customer → ' + custName);
+    }
+
+    // Address (reuses the same parser the address-autocomplete field uses)
+    var addrRaw = grab(['address'], fieldTriggers);
+    if (addrRaw){
+      var parsed = parseAddress(addrRaw);
+      if (parsed.street){ apply('address', parsed.street, 'Address → ' + parsed.street); }
+      if (parsed.city) updateField(t.id, 'city', parsed.city);
+      if (parsed.state) updateField(t.id, 'state', parsed.state);
+      if (parsed.zip) updateField(t.id, 'zip', parsed.zip);
+    }
+
+    // Phone
+    var phoneRaw = grab(['phone', 'phone number'], fieldTriggers);
+    if (phoneRaw){
+      var digits = phoneRaw.replace(/[^\d]/g, '');
+      if (digits.length >= 7){ apply('phone', phoneRaw.trim(), 'Phone → ' + phoneRaw.trim()); }
+    }
+
+    // Email — normalize spoken "at" / "dot"
+    var emailRaw = grab(['email'], fieldTriggers);
+    if (emailRaw){
+      var email = emailRaw.replace(/\s+at\s+/g, '@').replace(/\s+dot\s+/g, '.').replace(/\s+/g, '');
+      if (email.indexOf('@') !== -1) apply('email', email, 'Email → ' + email);
+    }
+
+    return changes;
   }
 
 
@@ -3504,6 +3831,130 @@
     filesManagerActiveId = null;
   }
 
+  function formatLogTimestamp(ms){
+    return new Date(ms).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  var CATEGORY_LABEL = { residential: 'Residential', commercial: 'Commercial', review: 'Ryan Review', sentComplete: 'Job Submitted', tracker: 'Unclassified' };
+
+  // Builds one lowercased blob per job out of every field a person might
+  // plausibly search by — name, address, contact info, every date/time
+  // field, and the full submission history — so search covers exactly
+  // the data that's actually in the app.
+  function searchIndexOf(t){
+    var parts = [
+      t.customer, t.address, t.city, t.state, t.zip, t.phone, t.email,
+      t.dueDate, t.dueTime, t.estimateDueDate, t.measureDate, t.estimateArrivalTime,
+      t.createdDate, t.createdTime
+    ];
+    (t.submissionLog || []).forEach(function(e){ parts.push(formatLogTimestamp(e.at)); });
+    return parts.filter(Boolean).join(' ').toLowerCase();
+  }
+
+  function searchJobs(query){
+    query = (query || '').trim().toLowerCase();
+    if (!query) return [];
+    return tasks.filter(function(t){ return searchIndexOf(t).indexOf(query) !== -1; }).slice(0, 15);
+  }
+
+  function renderSearchResults(resultsEl, query, matches){
+    if (!query){ resultsEl.innerHTML = ''; resultsEl.classList.remove('open'); return; }
+    if (!matches.length){
+      resultsEl.innerHTML = '<div class="search-result-empty">No jobs match “' + escapeHtml(query) + '”.</div>';
+      resultsEl.classList.add('open');
+      return;
+    }
+    resultsEl.innerHTML = matches.map(function(t){
+      var cat = categoryOf(t);
+      return '<div class="search-result-row" onclick="EP.goToJob(\'' + t.id + '\')">' +
+        '<span class="search-result-name">' + escapeHtml(t.customer || 'Untitled job') + '</span>' +
+        '<span class="search-result-cat">' + CATEGORY_LABEL[cat] + '</span>' +
+      '</div>';
+    }).join('');
+    resultsEl.classList.add('open');
+  }
+
+  function runGlobalSearch(query){
+    renderSearchResults(document.getElementById('global-search-results'), (query || '').trim(), searchJobs(query));
+  }
+
+  function runModalSearch(query){
+    renderSearchResults(document.getElementById('modal-search-results'), (query || '').trim(), searchJobs(query));
+  }
+
+  function hideGlobalSearchSoon(){
+    setTimeout(function(){
+      var el = document.getElementById('global-search-results');
+      if (el) el.classList.remove('open');
+    }, 180);
+  }
+
+  function hideModalSearchSoon(){
+    setTimeout(function(){
+      var el = document.getElementById('modal-search-results');
+      if (el) el.classList.remove('open');
+    }, 180);
+  }
+
+  // Jumps straight to a job wherever it currently lives — opens its
+  // table if collapsed, expands the job itself, scrolls it into view,
+  // and briefly flashes its border so it's unmistakable which one matched.
+  function goToJob(taskId){
+    var t = tasks.find(function(x){ return x.id === taskId; });
+    if (!t) return;
+    var cat = categoryOf(t);
+    if (collapsedGroups[cat]){
+      collapsedGroups[cat] = false;
+      var body = document.getElementById('groupbody-' + cat);
+      var chev = document.getElementById('chev-' + cat);
+      if (body) body.classList.remove('collapsed');
+      if (chev) chev.classList.remove('collapsed');
+    }
+    Object.keys(expanded).forEach(function(k){ expanded[k] = false; });
+    expanded[taskId] = true;
+
+    var globalInput = document.getElementById('global-search-input');
+    var globalResults = document.getElementById('global-search-results');
+    if (globalInput) globalInput.value = '';
+    if (globalResults){ globalResults.innerHTML = ''; globalResults.classList.remove('open'); }
+    closeAddJobModal();
+
+    render();
+    setTimeout(function(){
+      var rowEl = document.querySelector('.job-row[data-id="' + taskId + '"]');
+      if (rowEl){
+        rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        rowEl.classList.add('search-flash');
+        setTimeout(function(){ rowEl.classList.remove('search-flash'); }, 2000);
+      }
+    }, 80);
+  }
+
+  function openSubmissionLog(taskId){
+    var t = tasks.find(function(x){ return x.id === taskId; });
+    if (!t) return;
+    var entries = [{ label: 'Created', at: t.createdAt }];
+    var resubmitCount = 0;
+    (t.submissionLog || []).forEach(function(e){
+      if (e.type === 'submitted'){
+        entries.push({ label: 'Job Submitted', at: e.at });
+      } else {
+        resubmitCount++;
+        entries.push({ label: 'Job Re-Submitted' + (resubmitCount > 1 ? ' (' + resubmitCount + ')' : ''), at: e.at });
+      }
+    });
+    entries.sort(function(a, b){ return a.at - b.at; });
+    var html = entries.map(function(e){
+      return '<div class="submission-log-row"><span class="submission-log-label">' + escapeHtml(e.label) + '</span><span class="submission-log-time">' + escapeHtml(formatLogTimestamp(e.at)) + '</span></div>';
+    }).join('');
+    document.getElementById('submission-log-list').innerHTML = html;
+    document.getElementById('submission-log-overlay').classList.add('open');
+  }
+
+  function closeSubmissionLog(){
+    document.getElementById('submission-log-overlay').classList.remove('open');
+  }
+
   function renderFilesManagerList(){
     var listEl = document.getElementById('files-manager-list');
     if (!listEl || !filesManagerTaskId) return;
@@ -3589,14 +4040,32 @@
   }
 
   // ---------- Rendering ----------
-  function sortTasks(list){
-    return list.slice().sort(function(a,b){
+  var tableSortMode = { residential: 'importance', commercial: 'importance', review: 'importance', sentComplete: 'importance' };
+
+  function setSortMode(cat, mode){
+    tableSortMode[cat] = mode;
+    render();
+  }
+
+  function sortTasks(list, mode){
+    var sorted = list.slice().sort(function(a, b){
+      if (mode === 'name-asc' || mode === 'name-desc'){
+        var na = (a.customer || '').toLowerCase(), nb = (b.customer || '').toLowerCase();
+        var cmp = na < nb ? -1 : na > nb ? 1 : 0;
+        return mode === 'name-desc' ? -cmp : cmp;
+      }
+      if (mode === 'date-asc' || mode === 'date-desc'){
+        var cmp2 = a.createdAt - b.createdAt;
+        return mode === 'date-desc' ? -cmp2 : cmp2;
+      }
+      // Default: importance (priority tier, then manual drag order)
       var pa = sortRank(a), pb = sortRank(b);
       if (pa !== pb) return pa - pb;
       var ma = a.manualOrder || a.createdAt, mb = b.manualOrder || b.createdAt;
       if (ma !== mb) return ma - mb;
       return a.createdAt - b.createdAt;
     });
+    return sorted;
   }
 
   // Restates everything normally only visible by scrolling the row
@@ -3607,13 +4076,12 @@
   function mobileQuickStatusHtml(t){
     var priority = displayPriority(t);
     var cat = categoryOf(t);
-    var isTaskCat = cat === 'task';
     var dtDateField = t.jobType === 'residential' ? 'measureDate' : 'dueDate';
     var dtTimeField = t.jobType === 'residential' ? 'estimateArrivalTime' : 'dueTime';
     var dtDateVal = t[dtDateField] || '';
     var dtTimeVal = t[dtTimeField] || '';
     var dtDisplay = (dtDateVal ? dtDateVal : '') + (dtDateVal && dtTimeVal ? ' ' : '') + (dtTimeVal ? formatTime12(dtTimeVal) : '');
-    var dueLabel = t.jobType === 'residential' ? 'Arrival' : (isTaskCat ? 'Task Due' : 'Bid Due / Time');
+    var dueLabel = t.jobType === 'residential' ? 'Arrival' : 'Bid Due / Time';
 
     var rows = [];
     rows.push(['Assigned To', '<span class="mqs-avatars">' + avatarGroupHtml(t) + '</span>']);
@@ -3630,17 +4098,14 @@
         ? '<span class="add-datetime-btn grey" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
         : '<button type="button" class="add-datetime-btn grey" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>']);
 
-    if (!isTaskCat){
-      if (cat === 'residential') rows.push(['Measure', rowMeasureCellHtml(t)]);
-      rows.push(['Estimate Due',
-        t.estimateDueDate
-          ? '<span class="add-datetime-btn grey" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
-          : '<button type="button" class="add-datetime-btn grey" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>']);
-      if (cat !== 'residential') rows.push(['Takeoff', rowStatusCellHtml(t, 'takeoffComplete')]);
-      if (cat === 'commercial') rows.push(['Rep Price', rowStatusCellHtml(t, 'contactRepsPricing')]);
-      rows.push(['Quote', rowStatusCellHtml(t, 'quoteComplete')]);
-      rows.push(['Manual', rowStatusCellHtml(t, 'manualCreated')]);
-    }
+    rows.push(['Estimate Due',
+      t.estimateDueDate
+        ? '<span class="add-datetime-btn grey" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'' + t.estimateDueDate + '\')">' + escapeHtml(t.estimateDueDate) + '</span>'
+        : '<button type="button" class="add-datetime-btn grey" onclick="EP.openDatePicker(\'' + t.id + '\',\'estimateDueDate\',\'\')">Add Date</button>']);
+    if (cat !== 'residential') rows.push(['Takeoff', rowStatusCellHtml(t, 'takeoffComplete')]);
+    if (cat === 'commercial') rows.push(['Rep Price', rowStatusCellHtml(t, 'contactRepsPricing')]);
+    rows.push(['Quote', rowStatusCellHtml(t, 'quoteComplete')]);
+    rows.push(['Manual', rowStatusCellHtml(t, 'manualCreated')]);
 
     rows.push(['Sent To',
       '<select class="row-quick-select badge-select medium" onchange="EP.updateField(\'' + t.id + '\',\'sentTo\', this.value)">' +
@@ -3667,8 +4132,6 @@
     var deleteBtnClass = "btn small danger" + (confirmingDelete === t.id ? " confirming" : "");
     var deleteBtnLabel = confirmingDelete === t.id ? "Click again to delete" : "Delete";
 
-    var isTask = t.jobType === 'task';
-
     var createdDisplay = (t.createdDate ? t.createdDate : '') + (t.createdDate && t.createdTime ? ' ' : '') + (t.createdTime ? formatTime12(t.createdTime) : '');
     var createdFieldHtml =
       '<div class="field field-narrow"><label>Created</label>' +
@@ -3677,22 +4140,35 @@
           : '<button type="button" class="add-datetime-btn grey" onclick="EP.openDateTimePicker(\'' + t.id + '\',\'createdDate\',\'createdTime\',\'\',\'\', 1)">Add Date / Time</button>') +
       '</div>';
 
+    var isVoiceRecording = voiceLogRecognizing && voiceLogTaskId === t.id;
+    var voiceLogAtDisplay = t.voiceLogAt ? new Date(t.voiceLogAt).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    var voiceLogHtml =
+      '<div class="voice-log-block" onclick="event.stopPropagation()">' +
+        '<div class="voice-log-header">' +
+          '<span class="voice-log-title">🎙️ Voice Log</span>' +
+          '<button type="button" class="voice-log-btn' + (isVoiceRecording ? ' recording' : '') + '" onclick="EP.voiceLogToggle(\'' + t.id + '\')">' +
+            (isVoiceRecording ? '⏹ Send' : '🎙️ Dictate Job') +
+          '</button>' +
+        '</div>' +
+        (isVoiceRecording
+          ? '<div class="voice-log-live" id="voice-log-live-' + t.id + '">Listening…</div>'
+          : '<div class="voice-log-hint">Say job details naturally — priority, address, quote status, who it\'s sent to — then say "send" or tap the button again.</div>') +
+        (t.voiceLog
+          ? '<div class="voice-log-transcript">' + escapeHtml(t.voiceLog) + '</div><div class="voice-log-meta">Logged ' + escapeHtml(voiceLogAtDisplay) + '</div>'
+          : '') +
+      '</div>';
+
     return '' +
         '<div class="card-body-inner">' +
+          voiceLogHtml +
           mobileQuickStatusHtml(t) +
           '<div class="field-grid">' +
-            (isTask ? (
-              '<div class="field field-span-all"><label>Description of Task <span class="notes-edit-hint">(click to edit)</span></label>' +
-                '<div class="notes-preview" onclick="EP.openNotesEditor(\'' + t.id + '\')">' +
-                  (t.notes && t.notes.trim() ? linkifyHtml(t.notes, true) : '<span class="notes-placeholder">Click to write the task description…</span>') +
-                '</div>' +
-              '</div>'
-            ) : (
+            (
               '<div class="field field-span-all"><label>Customer</label>' +
                 '<input type="text" value="' + escapeHtml(t.customer) + '" autocomplete="off" onchange="EP.updateField(\'' + t.id + '\',\'customer\', this.value);"></div>'
-            )) +
+            ) +
             createdFieldHtml +
-            (!isTask ? (
+            (
               '<div class="field field-narrow"><label>Phone (optional)</label>' +
                 '<input type="tel" value="' + escapeHtml(formatPhoneInput(t.phone)) + '" autocomplete="off" oninput="this.value = EP.formatPhoneInput(this.value)" onchange="this.value = EP.finalizePhoneInput(this.value); EP.updateField(\'' + t.id + '\',\'phone\', this.value)"></div>' +
               '<div class="field field-medium"><label>Email (optional)</label>' +
@@ -3715,7 +4191,7 @@
                   '</div>'
                 ) : '') +
               '</div>'
-            ) : '') +
+            ) +
           '</div>' +
           '<div class="attachments-section">' +
             '<div class="attachments-head">' +
@@ -3740,13 +4216,13 @@
             '</div>' +
             '<div class="upload-hint">Up to ~3.5MB per file. Files are stored on the shared board.</div>' +
           '</div>' +
-          (!isTask ? (
+          (
             '<div class="field notes-field"><label>Notes <span class="notes-edit-hint">(click to edit)</span></label>' +
               '<div class="notes-preview" onclick="EP.openNotesEditor(\'' + t.id + '\')">' +
                 (t.notes && t.notes.trim() ? linkifyHtml(t.notes, true) : '<span class="notes-placeholder">Click to add notes…</span>') +
               '</div>' +
             '</div>'
-          ) : '') +
+          ) +
           '<div class="card-actions">' +
             '<span class="hint">Job type, Ryan Review, or Job Submitted move this card automatically.</span>' +
             '<button class="' + deleteBtnClass + '" onclick="EP.deleteTask(\'' + t.id + '\')">' + deleteBtnLabel + '</button>' +
@@ -3791,7 +4267,7 @@
 
   // Renders a compact status dropdown for a single status field, right on the
   // row — but only if that field is actually part of this job's checklist
-  // (e.g. Quote Complete isn't a step for Task-type jobs).
+  // (e.g. Rep Price isn't a step for Residential jobs).
   // Lets you nudge a job up or down past its neighbors of the same priority
   // — handy when two jobs are tied at, say, Medium and you want one listed
   // above the other regardless of when each was added.
@@ -3808,27 +4284,6 @@
     var curVal = t[key] || 'not_started';
     return '<select class="row-quick-select status-select status-' + curVal + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'' + key + '\', this.value); this.className = \'row-quick-select status-select status-\' + this.value;">' +
       STATUS_OPTIONS.map(function(o){
-        return '<option value="' + o.value + '"' + (o.value === curVal ? ' selected' : '') + '>' + o.label + '</option>';
-      }).join('') +
-      '</select>';
-  }
-
-  // Measure column — same select/badge pattern and styling as every other
-  // status field (Quote, Manual, etc.), just its own smaller option set:
-  // the button reads "Status" until something's picked, then Complete,
-  // Not Complete, or N/A.
-  var MEASURE_STATUS_OPTIONS = [
-    { value: 'completed', label: 'Complete' },
-    { value: 'not_complete', label: 'Not Complete' },
-    { value: 'na', label: 'N/A' }
-  ];
-
-  function rowMeasureCellHtml(t){
-    var curVal = t.measureComplete || '';
-    var cssTier = curVal || 'not_started'; // reuses the existing neutral "not started" styling for the blank Status state
-    return '<select class="row-quick-select status-select status-' + cssTier + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'measureComplete\', this.value); this.className = \'row-quick-select status-select status-\' + (this.value || \'not_started\');">' +
-      '<option value=""' + (!curVal ? ' selected' : '') + '>Status</option>' +
-      MEASURE_STATUS_OPTIONS.map(function(o){
         return '<option value="' + o.value + '"' + (o.value === curVal ? ' selected' : '') + '>' + o.label + '</option>';
       }).join('') +
       '</select>';
@@ -3873,51 +4328,26 @@
     var noteCount = t.notes && t.notes.trim() ? 1 : 0;
     var fileCount = t.attachments ? t.attachments.length : 0;
 
+    // Files/Notes now live as icon buttons right in the job-name column,
+    // separated by a divider, instead of their own columns at the end of
+    // the row. Same click handlers as before (openFilesManager /
+    // openNotesEditor) — just relocated.
+    var nameIconsHtml =
+      '<span class="job-name-icons" onclick="event.stopPropagation()">' +
+        '<span class="job-name-divider"></span>' +
+        '<button type="button" class="job-icon-btn" title="' + (fileCount ? fileCount + ' file' + (fileCount === 1 ? '' : 's') : 'Add files') + '" onclick="EP.openFilesManager(\'' + t.id + '\')">📁<span class="job-icon-plus">+</span>' +
+          (fileCount ? '<span class="job-icon-count">' + fileCount + '</span>' : '') +
+        '</button>' +
+        '<button type="button" class="job-icon-btn" title="' + (noteCount ? 'Notes' : 'Add notes') + '" onclick="EP.openNotesEditor(\'' + t.id + '\')">✏️<span class="job-icon-plus">+</span>' +
+          (noteCount ? '<span class="job-icon-count">&#8226;</span>' : '') +
+        '</button>' +
+      '</span>';
+
     // Created date/time — plain, non-interactive text under the job name.
     // Editing lives as its own field in the expanded detail panel below
     // (see detailPanelHtml), not by clicking this text.
     var createdDisplay = (t.createdDate ? t.createdDate : '') + (t.createdDate && t.createdTime ? ' ' : '') + (t.createdTime ? formatTime12(t.createdTime) : '');
     var createdSubHtml = createdDisplay ? '<span class="job-task-sub">Created ' + escapeHtml(createdDisplay) + '</span>' : '';
-
-    // Task's table is intentionally much simpler than the others — just
-    // Job, Priority, Task Due, Ryan Review, Progress, Notes, Files, Updated.
-    if (categoryOf(t) === 'task'){
-      return '' +
-      '<div class="job-row-wrap priority-' + priority + '">' +
-        '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + apptUrgencyClass(t) + '" data-id="' + t.id + '">' +
-          '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
-            moveButtonsHtml(t) +
-            '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
-            avatarGroupHtml(t) +
-            '<span class="job-task-text">' +
-              '<span class="job-task-name-row">' +
-                '<span class="job-task-name' + (t.customer ? '' : ' placeholder') + '">' + (t.customer ? escapeHtml(t.customer) : 'Untitled job') + '</span>' +
-                dueFlagHtml +
-              '</span>' +
-              createdSubHtml +
-            '</span>' +
-          '</div>' +
-          '<div class="jc jc-priority">' +
-            '<select class="row-quick-select badge-select ' + (priority || 'none') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
-              ['', 'urgent','high','medium','low'].map(function(p){
-                return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
-              }).join('') +
-            '</select>' +
-          '</div>' +
-          '<div class="jc jc-due">' +
-            (dtDisplay
-              ? '<span class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
-              : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>') +
-          '</div>' +
-          sentToCellHtml(t) +
-          '<div class="jc jc-progress"><div class="tape small"><div class="tape-fill" style="width:' + pct + '%"></div></div><span class="progress-pct-sm">' + pct + '%</span></div>' +
-          '<div class="jc jc-notes">' + (noteCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">📝</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">+ Add</button>') + '</div>' +
-          '<div class="jc jc-files">' + (fileCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">📎 ' + fileCount + '</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">+ Add</button>') + '</div>' +
-          '<div class="jc jc-updated">' + relativeTime(t.updatedAt) + '</div>' +
-        '</div>' +
-        (isExpanded ? '<div class="job-detail">' + detailPanelHtml(t) + '</div>' : '') +
-      '</div>';
-    }
 
     return '' +
     '<div class="job-row-wrap priority-' + priority + '">' +
@@ -3934,20 +4364,22 @@
             createdSubHtml +
             (fullAddress(t) ? '<span class="job-task-sub">' + escapeHtml(fullAddress(t)) + '</span>' : '') +
           '</span>' +
+          nameIconsHtml +
         '</div>' +
         '<div class="jc jc-priority">' +
-          '<select class="row-quick-select badge-select ' + (priority || 'none') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
-            ['', 'urgent','high','medium','low'].map(function(p){
-              return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
-            }).join('') +
-          '</select>' +
+          (categoryOf(t) === 'sentComplete'
+            ? '<button type="button" class="voice-log-btn" title="Logged Submission" onclick="event.stopPropagation(); EP.openSubmissionLog(\'' + t.id + '\')">VIEW</button>'
+            : '<select class="row-quick-select badge-select ' + (priority || 'none') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
+                ['', 'urgent','high','medium','low'].map(function(p){
+                  return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
+                }).join('') +
+              '</select>') +
         '</div>' +
         '<div class="jc jc-due">' +
           (dtDisplay
             ? '<span class="add-datetime-btn ' + (isOverdue ? 'overdue-text' : '') + '" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'' + dtDateVal + '\',\'' + dtTimeVal + '\')">' + escapeHtml(dtDisplay) + '</span>'
             : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openDateTimePicker(\'' + t.id + '\',\'' + dtDateField + '\',\'' + dtTimeField + '\',\'\',\'\')">Add Date / Time</button>') +
         '</div>' +
-        (categoryOf(t) === 'residential' ? '<div class="jc jc-measure">' + rowMeasureCellHtml(t) + '</div>' : '') +
         (categoryOf(t) === 'commercial' ? '' : (
         '<div class="jc jc-estdue">' +
           (t.estimateDueDate
@@ -3962,9 +4394,6 @@
         '<div class="jc jc-manual">' + rowStatusCellHtml(t, 'manualCreated') + '</div>' +
         (categoryOf(t) === 'residential' ? sentToCellHtml(t) : '') +
         (categoryOf(t) === 'residential' ? '' : sentToCellHtml(t)) +
-        '<div class="jc jc-progress"><div class="tape small"><div class="tape-fill" style="width:' + pct + '%"></div></div><span class="progress-pct-sm">' + pct + '%</span></div>' +
-        '<div class="jc jc-notes">' + (noteCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">📝</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openNotesEditor(\'' + t.id + '\')">+ Add</button>') + '</div>' +
-        '<div class="jc jc-files">' + (fileCount ? '<span class="row-quick-edit" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">📎 ' + fileCount + '</span>' : '<button type="button" class="add-datetime-btn" onclick="event.stopPropagation(); EP.openFilesManager(\'' + t.id + '\')">+ Add</button>') + '</div>' +
         '<div class="jc jc-updated">' + relativeTime(t.updatedAt) + '</div>' +
       '</div>' +
       (isExpanded ? '<div class="job-detail">' + detailPanelHtml(t) + '</div>' : '') +
@@ -3988,12 +4417,11 @@
     refreshNotesFilesCount();
     if (filesManagerTaskId) renderFilesManagerList();
 
-    var byCat = { tracker: [], residential: [], commercial: [], task: [], review: [], sentComplete: [] };
+    var byCat = { tracker: [], residential: [], commercial: [], review: [], sentComplete: [] };
     tasks.forEach(function(t){ byCat[categoryOf(t)].push(t); });
 
     document.getElementById('count-residential').textContent = '- ' + byCat.residential.length;
     document.getElementById('count-commercial').textContent = '- ' + byCat.commercial.length;
-    document.getElementById('count-task').textContent = '- ' + byCat.task.length;
     document.getElementById('count-review').textContent = '- ' + byCat.review.length;
     document.getElementById('count-sentComplete').textContent = '- ' + byCat.sentComplete.length;
 
@@ -4014,7 +4442,6 @@
 
     var colResidential = document.getElementById('col-residential');
     var colCommercial = document.getElementById('col-commercial');
-    var colTask = document.getElementById('col-task');
     var colReview = document.getElementById('col-review');
     var colSentComplete = document.getElementById('col-sentComplete');
 
@@ -4027,10 +4454,9 @@
       listEl.innerHTML = sortedList.length ? sortedList.map(rowHtml).join('') : emptyHtml(emptyMsg);
     }
 
-    renderGroup('col-residential', sortTasks(byCat.residential), "No residential jobs right now.");
-    renderGroup('col-commercial', sortTasks(byCat.commercial), "No commercial jobs right now.");
-    renderGroup('col-task', sortTasks(byCat.task), "No tasks right now.");
-    var sortedReview = sortTasks(byCat.review);
+    renderGroup('col-residential', sortTasks(byCat.residential, tableSortMode.residential), "No residential jobs right now.");
+    renderGroup('col-commercial', sortTasks(byCat.commercial, tableSortMode.commercial), "No commercial jobs right now.");
+    var sortedReview = sortTasks(byCat.review, tableSortMode.review);
     renderGroup('col-review', sortedReview, "Nothing waiting on Ryan right now.");
 
     // Ryan Review and Job Submitted both hold a mix of job types, so the
@@ -4048,8 +4474,6 @@
         dueLabel.textContent = 'Arrival';
       } else if (jt === 'commercial'){
         dueLabel.textContent = 'Bid Due / Time';
-      } else if (jt === 'task'){
-        dueLabel.textContent = 'Task Due';
       } else {
         dueLabel.textContent = 'Estimate Time / Date';
       }
@@ -4058,7 +4482,7 @@
     }
     updateMixedTableHeader('review', sortedReview);
 
-    var sortedSentComplete = sortTasks(byCat.sentComplete);
+    var sortedSentComplete = sortTasks(byCat.sentComplete, tableSortMode.sentComplete);
     renderGroup('col-sentComplete', sortedSentComplete, "Nothing submitted yet.");
     updateMixedTableHeader('sentComplete', sortedSentComplete);
 
@@ -4106,6 +4530,14 @@
     triggerRowFileUpload: triggerRowFileUpload,
     openFilesManager: openFilesManager,
     closeFilesManager: closeFilesManager,
+    openSubmissionLog: openSubmissionLog,
+    closeSubmissionLog: closeSubmissionLog,
+    setSortMode: setSortMode,
+    runGlobalSearch: runGlobalSearch,
+    runModalSearch: runModalSearch,
+    hideGlobalSearchSoon: hideGlobalSearchSoon,
+    hideModalSearchSoon: hideModalSearchSoon,
+    goToJob: goToJob,
     selectFilePreview: selectFilePreview,
     moveAttachmentInManager: moveAttachmentInManager,
     renameAttachmentInManager: renameAttachmentInManager,
@@ -4122,6 +4554,9 @@
     saveNotesEditor: saveNotesEditor,
     notesExec: notesExec,
     notesToggleVoice: notesToggleVoice,
+    voiceLogToggle: voiceLogToggle,
+    talkAddJob: talkAddJob,
+    talkChangeUpdate: talkChangeUpdate,
     autofillNewAddress: autofillNewAddress,
     autofillTaskAddress: autofillTaskAddress,
     searchNewAddress: searchNewAddress,
@@ -4132,7 +4567,6 @@
     hideAddressSuggestionsSoon: hideAddressSuggestionsSoon,
     updateTimeSelect: updateTimeSelect,
     openAddJobModal: openAddJobModal,
-    openTaskDescriptionForNew: openTaskDescriptionForNew,
     setNewJobType: setNewJobType,
     openDatePicker: openDatePicker,
     closeDatePicker: closeDatePicker,
