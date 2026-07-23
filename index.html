@@ -1342,6 +1342,30 @@
   .voice-log-meta{ font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
   .voice-log-hint{ font-size: 11.5px; color: var(--ink-soft); margin-top: 6px; }
   .submission-log-box{ width: 340px; max-width: 90vw; }
+  .wizard-box{ width: 420px; max-width: 92vw; }
+  .wizard-status{
+    text-align: center;
+    font-size: 13px; font-weight: 700;
+    color: var(--medium);
+    padding: 2px 20px 10px;
+  }
+  .wizard-log{
+    max-height: 360px;
+    overflow-y: auto;
+    padding: 6px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .wizard-log-line{
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    line-height: 1.4;
+  }
+  .wizard-log-ask{ background: var(--medium-soft); color: var(--medium); font-weight: 600; }
+  .wizard-log-answer{ background: #F1F1EC; color: var(--ink); margin-left: 18px; }
+  .wizard-log-system{ color: var(--ink-soft); font-size: 11.5px; font-style: italic; padding: 2px 12px; }
   .submission-log-list{ padding: 6px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
   .submission-log-row{
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1503,12 +1527,16 @@
 
   /* ---------- Appointment-time urgency escalation ----------
      Tracks how close a job's Estimate Time/Date (the measure/appointment
-     time) is to arriving. Purely a display overlay — never writes to the
-     job's stored priority, so it always has something real to fall back
-     to once the window passes. See apptUrgencyTier() in JS. */
-  .job-row.appt-yellow{
+     time) is to arriving: solid red from 45 minutes out, pulsing red for
+     the final 5 minutes leading up to it, then solid red again once it's
+     reached — and stays that way until it's actually resolved. Purely a
+     display overlay — never writes to the job's stored priority, so
+     there's always something real to fall back to. See apptUrgencyTier()
+     in JS. Also reused for the day-based "due tomorrow" orange border
+     (see urgencyBorderClass()). */
+  .job-row.appt-medium{
     position: relative;
-    box-shadow: inset 0 0 0 3px #E8FF00;
+    box-shadow: inset 0 0 0 3px var(--medium);
   }
   .job-row.appt-orange{
     position: relative;
@@ -1547,7 +1575,7 @@
       <img class="page-heading-logo-img" alt="Sutton Flooring" src="data:image/png;base64,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">
       <div class="header-actions">
         <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
-        <button type="button" class="header-minimize-btn talk-add-job-btn" onclick="EP.talkAddJob('residential')" title="Talk a new job in">🎙️ Talk Add Job</button>
+        <button type="button" class="header-minimize-btn talk-add-job-btn" onclick="EP.talkAddJob()" title="Talk a new job in">🎙️ Talk Add Job</button>
       </div>
     </div>
 
@@ -1656,6 +1684,17 @@
         <input type="file" id="files-manager-input" multiple style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.heic,.webp" onchange="EP.handleFilesManagerUpload(this.files); this.value='';">
         <button type="button" class="btn small" onclick="EP.closeFilesManager()">Done</button>
       </div>
+    </div>
+  </div>
+
+  <div class="date-picker-overlay" id="voice-wizard-overlay">
+    <div class="date-picker-box wizard-box">
+      <div class="date-picker-header">
+        <span>🎙️ Talk Add Job</span>
+        <button class="notes-modal-close" onclick="EP.cancelWizard()">&#10005;</button>
+      </div>
+      <div class="wizard-status" id="wizard-status">🔊 …</div>
+      <div class="wizard-log" id="wizard-log"></div>
     </div>
   </div>
 
@@ -1839,7 +1878,7 @@
           </div>
           <div id="col-review"></div>
         </div>
-        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span><button type="button" class="talk-add-job-btn" onclick="EP.talkAddJob('residential')">🎙️ Talk Add Job</button></div>
+        <div class="job-table-addrow"><span class="job-table-addrow-link" onclick="EP.openAddJobModal('residential')">+ Add Job</span><button type="button" class="talk-add-job-btn" onclick="EP.talkAddJob()">🎙️ Talk Add Job</button></div>
       </div>
     </div>
     <div class="group-panel" data-cat="sentComplete">
@@ -2440,11 +2479,14 @@
   }
 
   // ---------- Appointment-time urgency escalation ----------
-  // Tracks the job's key deadlines and escalates as they approach, then
-  // eases back off once they've passed. This is purely a DISPLAY overlay —
-  // it never writes t.priority to storage — so "resetting" just means the
-  // tier goes back to null and every display function falls through to
-  // the job's real stored priority automatically. Nothing to undo.
+  // Tracks the job's key deadlines and escalates as they approach: solid
+  // red from 45 minutes out, pulsing for the final 5 minutes, solid red
+  // again for 5 minutes past the reference time, then clears entirely —
+  // it's no longer in any warning at that point, so both the border and
+  // the priority fall back to normal automatically. This is purely a
+  // DISPLAY overlay — it never writes t.priority to storage, so every
+  // display function always falls through to the job's real stored
+  // priority the moment the tier clears.
   //
   // Deadlines covered:
   //  - Estimate Time / Date (the measure/appointment moment — measureDate +
@@ -2456,15 +2498,6 @@
   //    due-flash system already used).
   // If more than one deadline is active at once, whichever is currently
   // more urgent wins.
-  var PRIORITY_STEPS = ['urgent', 'high', 'medium', 'low']; // index 0 = most urgent
-
-  function bumpPriorityUp(p, steps){
-    var idx = PRIORITY_STEPS.indexOf(p);
-    if (idx === -1) idx = PRIORITY_STEPS.length - 1;
-    idx = Math.max(idx - steps, 0);
-    return PRIORITY_STEPS[idx];
-  }
-
   function appointmentFieldsOf(t){
     var dateField = t.jobType === 'residential' ? 'measureDate' : 'dueDate';
     var timeField = t.jobType === 'residential' ? 'estimateArrivalTime' : 'dueTime';
@@ -2476,21 +2509,23 @@
     return minutesUntil(f.date, f.time);
   }
 
-  // Tiers, keyed to minutes until (positive) / past (negative) a deadline:
-  //   45 -> 15 min out   : yellow, priority bumped up 1 step
-  //   15 -> 0 min out    : orange, priority bumped up 2 steps
-  //   0 -> 5 min past    : red, priority forced to urgent
-  //   5 -> 10 min past   : red border flashes every second, still urgent
-  //   10+ min past       : back to normal — falls through to real priority
-  var URGENCY_TIER_RANK = { yellow: 1, orange: 2, red: 3, flash: 4 };
+  // Tiers, keyed to minutes until (positive) / past (negative) the
+  // reference time:
+  //   45 -> 5 min out  : solid red, priority forced to urgent
+  //   5 -> 0 min out   : red border pulses every second — the final
+  //                      stretch before the reference time hits
+  //   0 -> 5 min past  : solid red again — still in the warning window
+  //   5+ min past      : clears entirely — no longer in any warning, so
+  //                      both the border and the priority fall back to
+  //                      whatever they actually are
+  var URGENCY_TIER_RANK = { red: 3, flash: 4 };
 
   function urgencyTierFromMinutes(mins){
     if (mins === null) return null;
     if (mins > 45) return null;
-    if (mins > 15) return 'yellow';
-    if (mins > 0) return 'orange';
+    if (mins > 5) return 'red';
+    if (mins > 0) return 'flash';
     if (mins > -5) return 'red';
-    if (mins > -10) return 'flash';
     return null;
   }
 
@@ -2512,19 +2547,8 @@
     return bestTier;
   }
 
-  function apptUrgencyClass(t){
-    var tier = apptUrgencyTier(t);
-    if (tier === 'yellow') return ' appt-yellow';
-    if (tier === 'orange') return ' appt-orange';
-    if (tier === 'red') return ' appt-red';
-    if (tier === 'flash') return ' appt-flash';
-    return '';
-  }
-
   function apptDisplayPriority(t){
     var tier = apptUrgencyTier(t);
-    if (tier === 'yellow') return bumpPriorityUp(t.priority, 1);
-    if (tier === 'orange') return bumpPriorityUp(t.priority, 2);
     if (tier === 'red' || tier === 'flash') return 'urgent';
     return null;
   }
@@ -2533,7 +2557,48 @@
     var apptPriority = apptDisplayPriority(t);
     if (apptPriority) return apptPriority;
     var tier = dueUrgencyTier(t);
-    return (tier === "today" || tier === "overdue") ? "urgent" : t.priority;
+    if (tier === "today" || tier === "overdue") return "urgent";
+    if (tier === "tomorrow"){
+      var storedT = PRIORITY_ORDER[t.priority];
+      return storedT <= PRIORITY_ORDER.high ? t.priority : "high";
+    }
+    if (tier === "soon"){
+      var storedS = PRIORITY_ORDER[t.priority];
+      return storedS <= PRIORITY_ORDER.medium ? t.priority : "medium";
+    }
+    return t.priority;
+  }
+
+  // Picks whichever urgency system currently has the strongest claim on
+  // this row's border — the appointment-time escalation, the day-based
+  // due-date tiers (now always-on the moment a job is due today/tomorrow,
+  // not gated behind a separate end-of-day countdown), or the older flat
+  // 45-minute flash still used for anything else with a due date — and
+  // returns one CSS class, reusing the same priority-color palette
+  // everywhere (urgent=red, high=orange, medium=blue) so the color always
+  // means the same thing.
+  function urgencyBorderClass(t){
+    var apptTier = apptUrgencyTier(t);
+    var best = apptTier ? URGENCY_TIER_RANK[apptTier] : 0;
+    var bestClass = apptTier ? apptTier : null;
+
+    var dueTier = dueUrgencyTier(t);
+    var dueRank = (dueTier === 'overdue' || dueTier === 'today') ? 3
+      : dueTier === 'tomorrow' ? 2
+      : dueTier === 'soon' ? 1
+      : 0;
+    if (dueRank > best){
+      best = dueRank;
+      bestClass = dueRank === 3 ? 'red' : dueRank === 2 ? 'orange' : 'medium';
+    }
+
+    if (isDueSoon(t) && 3 > best){ best = 3; bestClass = 'red'; }
+
+    if (bestClass === 'medium') return ' appt-medium';
+    if (bestClass === 'orange') return ' appt-orange';
+    if (bestClass === 'red') return ' appt-red';
+    if (bestClass === 'flash') return ' appt-flash';
+    return '';
   }
 
   function sortRank(t){
@@ -2542,7 +2607,8 @@
     if (apptPriority) return PRIORITY_ORDER[apptPriority];
     var tier = dueUrgencyTier(t);
     if (tier === "today" || tier === "overdue") return PRIORITY_ORDER.urgent;
-    if (tier === "tomorrow" || tier === "soon") return Math.min(stored, PRIORITY_ORDER.high);
+    if (tier === "tomorrow") return Math.min(stored, PRIORITY_ORDER.high);
+    if (tier === "soon") return Math.min(stored, PRIORITY_ORDER.medium);
     return stored;
   }
 
@@ -3430,22 +3496,284 @@
   var voiceLogTaskId = null;
   var voiceLogParts = [];
 
-  // The two ways to add a job: tap "+ Add Job" and fill in the form, or
-  // tap "Talk Add Job" and just say it — this creates a blank job of the
-  // right type, opens it, and immediately starts the same Voice Log
-  // capture used to update any existing job.
-  function talkAddJob(jobType){
-    var t = blankTask('', '', '', '', '', '', '', '', jobType, '');
-    tasks.push(t);
-    Object.keys(expanded).forEach(function(k){ expanded[k] = false; });
-    expanded[t.id] = true;
-    scheduleSave();
-    render();
+  // ---------- Talk Add Job: guided voice wizard ----------
+  // Rather than one long continuous dictation, this asks one question at
+  // a time, waits for a real pause before treating an answer as finished
+  // (each turn is its own listen session, so there's a natural breath
+  // between question and answer, and between answers), reads back what
+  // it heard for a yes/no confirmation, and only creates the job after a
+  // final "should I add this?" check — so nothing gets created on a
+  // misheard word, and anything can be corrected before it's real.
+  var wizardTaskDraft = null;
+  var wizardSteps = [];
+  var wizardStepIndex = 0;
+  var wizardRecognition = null;
+  var wizardListening = false;
+
+  function speak(text, onDone){
+    try{
+      if (!window.speechSynthesis){ if (onDone) setTimeout(onDone, 300); return; }
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.98;
+      var done = false;
+      var finish = function(){ if (done) return; done = true; if (onDone) onDone(); };
+      u.onend = finish;
+      u.onerror = finish;
+      window.speechSynthesis.speak(u);
+      // Safety net: some mobile browsers silently drop onend — never let
+      // the wizard hang forever waiting for it.
+      setTimeout(finish, Math.max(1800, text.length * 90));
+    } catch(e){ if (onDone) onDone(); }
+  }
+
+  function logWizard(kind, text){
+    var log = document.getElementById('wizard-log');
+    if (!log) return;
+    var cls = kind === 'ask' ? 'wizard-log-ask' : kind === 'answer' ? 'wizard-log-answer' : 'wizard-log-system';
+    var prefix = kind === 'ask' ? '🎙️ ' : kind === 'answer' ? '🗣️ ' : '• ';
+    var div = document.createElement('div');
+    div.className = 'wizard-log-line ' + cls;
+    div.textContent = prefix + text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function updateWizardStatus(text){
+    var el = document.getElementById('wizard-status');
+    if (el) el.textContent = text;
+  }
+
+  // One listen per turn (continuous = false) — the browser's own
+  // silence-detection decides when the person has finished talking,
+  // which is exactly the "room to breathe" a single long continuous
+  // stream doesn't give.
+  function wizardListen(onResult){
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec){
+      showToast("🎙️ Voice dictation isn't supported in this browser — try Chrome or Edge.");
+      endWizard(false);
+      return;
+    }
+    wizardRecognition = new SpeechRec();
+    wizardRecognition.continuous = false;
+    wizardRecognition.interimResults = false;
+    wizardRecognition.lang = 'en-US';
+    wizardRecognition.onresult = function(e){
+      wizardListening = false;
+      updateWizardStatus('🔊 …');
+      onResult(e.results[0][0].transcript.trim());
+    };
+    wizardRecognition.onerror = function(){
+      wizardListening = false;
+      updateWizardStatus('Didn\'t catch that — tap the mic to try again.');
+    };
+    wizardRecognition.onend = function(){ wizardListening = false; };
+    // A short beat between the question finishing and the mic opening.
     setTimeout(function(){
-      var rowEl = document.querySelector('.job-row[data-id="' + t.id + '"]');
-      if (rowEl) rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      voiceLogToggle(t.id);
-    }, 120);
+      wizardListening = true;
+      updateWizardStatus('🎙️ Listening…');
+      try{ wizardRecognition.start(); } catch(e){ /* already running or blocked — ignore */ }
+    }, 500);
+  }
+
+  // Strips carrier words ("add job", "job", "the job is", "name is")
+  // so only the actual name is kept, however the person phrases it.
+  function extractJobName(text){
+    var t = text.trim();
+    t = t.replace(/^(please\s+)?add\s+job\s+/i, '');
+    t = t.replace(/^(the\s+)?job\s+(name\s+)?(is\s+)?/i, '');
+    t = t.replace(/^name\s+(is\s+)?/i, '');
+    t = t.trim();
+    if (!t) return '';
+    return t.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+  }
+
+  function matchWizardFieldName(text){
+    text = text.toLowerCase();
+    if (/name/.test(text)) return 'customer';
+    if (/type|residential|commercial/.test(text)) return 'jobType';
+    if (/priorit/.test(text)) return 'priority';
+    if (/address/.test(text)) return 'address';
+    return null;
+  }
+
+  function beginWizardField(index){
+    if (index >= wizardSteps.length){ beginWizardReview(); return; }
+    wizardStepIndex = index;
+    var field = wizardSteps[index];
+    var prompt = typeof field.prompt === 'function' ? field.prompt(wizardTaskDraft) : field.prompt;
+    logWizard('ask', prompt);
+    updateWizardStatus('🔊 …');
+    speak(prompt, function(){
+      wizardListen(function(text){
+        logWizard('answer', text);
+        handleWizardAnswer(field, text);
+      });
+    });
+  }
+
+  function handleWizardAnswer(field, text){
+    if (field.optional && /^\s*skip\b/i.test(text)){
+      wizardTaskDraft[field.key] = '';
+      logWizard('system', field.label + ' skipped.');
+      beginWizardField(wizardStepIndex + 1);
+      return;
+    }
+    var value = field.parse(text);
+    if (value === null || value === ''){
+      var reprompt = "Sorry, I didn't catch that. " + (typeof field.prompt === 'function' ? field.prompt(wizardTaskDraft) : field.prompt);
+      logWizard('system', "Didn't catch that — asking again.");
+      speak(reprompt, function(){
+        wizardListen(function(t2){
+          logWizard('answer', t2);
+          handleWizardAnswer(field, t2);
+        });
+      });
+      return;
+    }
+    var desc = field.describe(value);
+    speak('Got it — ' + desc + '. Is that correct?', function(){
+      wizardListen(function(yn){
+        logWizard('answer', yn);
+        if (/\b(no|nope|not|wrong|incorrect)\b/i.test(yn)){
+          logWizard('system', "Let's try that again.");
+          beginWizardField(wizardStepIndex);
+        } else {
+          if (field.applyExtra){ field.applyExtra(value, wizardTaskDraft); }
+          else { wizardTaskDraft[field.key] = value; }
+          logWizard('system', field.label + ' set: ' + desc);
+          beginWizardField(wizardStepIndex + 1);
+        }
+      });
+    });
+  }
+
+  function beginWizardReview(){
+    var d = wizardTaskDraft;
+    var bits = [];
+    bits.push(d.customer || 'this job');
+    bits.push(d.jobType === 'commercial' ? 'a commercial job' : 'a residential job');
+    if (d.priority) bits.push('priority ' + PRIORITY_LABEL[d.priority]);
+    if (d.address) bits.push('at ' + d.address);
+    var summary = bits.join(', ');
+    logWizard('system', 'Reviewing: ' + summary);
+    speak('Here is what I have: ' + summary + '. Should I add this job?', function(){
+      wizardListen(function(text){
+        logWizard('answer', text);
+        if (/\b(no|nope|not|wrong)\b/i.test(text)){
+          speak('What would you like to change — job name, type, priority, or address?', function(){
+            wizardListen(function(t2){
+              logWizard('answer', t2);
+              var key = matchWizardFieldName(t2);
+              var idx = key ? wizardSteps.findIndex(function(f){ return f.key === key; }) : -1;
+              if (idx !== -1){ beginWizardField(idx); return; }
+              logWizard('system', "Didn't catch which field — reviewing again.");
+              beginWizardReview();
+            });
+          });
+        } else {
+          finalizeWizardJob();
+        }
+      });
+    });
+  }
+
+  function finalizeWizardJob(){
+    var d = wizardTaskDraft;
+    var t = blankTask(d.customer || '', d.priority || '', d.address || '', d.city || '', d.state || '', d.zip || '', '', '', d.jobType || 'residential', '');
+    tasks.push(t);
+    scheduleSave();
+    logWizard('system', '✅ Job added: ' + (t.customer || 'Untitled job'));
+    speak('Job added.', function(){
+      setTimeout(function(){ endWizard(true, t.id); }, 400);
+    });
+  }
+
+  function openWizardModal(){
+    var overlay = document.getElementById('voice-wizard-overlay');
+    var log = document.getElementById('wizard-log');
+    if (log) log.innerHTML = '';
+    updateWizardStatus('🔊 …');
+    if (overlay) overlay.classList.add('open');
+  }
+
+  function endWizard(success, taskId){
+    if (wizardRecognition){ try{ wizardRecognition.abort(); } catch(e){} }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    wizardListening = false;
+    var overlay = document.getElementById('voice-wizard-overlay');
+    if (overlay) overlay.classList.remove('open');
+    wizardTaskDraft = null;
+    wizardSteps = [];
+    if (success && taskId){
+      Object.keys(expanded).forEach(function(k){ expanded[k] = false; });
+      expanded[taskId] = true;
+    }
+    render();
+    if (success && taskId){
+      setTimeout(function(){
+        var rowEl = document.querySelector('.job-row[data-id="' + taskId + '"]');
+        if (rowEl) rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }
+
+  function cancelWizard(){
+    logWizard('system', 'Cancelled — no job was created.');
+    speak('Okay, cancelled.', function(){ endWizard(false); });
+  }
+
+  // jobType passed in from a specific table's button skips the type
+  // question entirely (already unambiguous); the top-level button and
+  // Ryan Review's pass nothing, so the wizard asks first.
+  function talkAddJob(jobType){
+    wizardTaskDraft = { jobType: jobType || '' };
+    wizardSteps = [];
+    if (!jobType){
+      wizardSteps.push({
+        key: 'jobType', label: 'Job Type', optional: false,
+        prompt: 'Is this a residential or commercial job?',
+        parse: function(text){
+          text = text.toLowerCase();
+          if (/resident/.test(text)) return 'residential';
+          if (/commerc/.test(text)) return 'commercial';
+          return null;
+        },
+        describe: function(v){ return v.charAt(0).toUpperCase() + v.slice(1); }
+      });
+    }
+    wizardSteps.push({
+      key: 'customer', label: 'Job Name', optional: false,
+      prompt: "What is the job's name?",
+      parse: function(text){ var n = extractJobName(text); return n || null; },
+      describe: function(v){ return v; }
+    });
+    wizardSteps.push({
+      key: 'priority', label: 'Priority', optional: true,
+      prompt: 'What priority — urgent, high, medium, or low? Or say skip.',
+      parse: function(text){
+        var m = text.toLowerCase().match(/\b(urgent|high|medium|low)\b/);
+        return m ? m[1] : null;
+      },
+      describe: function(v){ return PRIORITY_LABEL[v]; }
+    });
+    wizardSteps.push({
+      key: 'address', label: 'Address', optional: true,
+      prompt: 'What is the job address? Or say skip.',
+      parse: function(text){ return text.trim() || null; },
+      describe: function(v){ return v; },
+      applyExtra: function(value, job){
+        var p = parseAddress(value);
+        job.address = p.street || value;
+        job.city = p.city || '';
+        job.state = p.state || '';
+        job.zip = p.zip || '';
+      }
+    });
+    openWizardModal();
+    logWizard('system', 'Starting Talk Add Job…');
+    beginWizardField(0);
   }
 
   // Job Submitted isn't a place to create new jobs — everything there
@@ -4089,7 +4417,7 @@
     rows.push(['Priority',
       '<select class="row-quick-select badge-select ' + (priority || 'none') + (priority ? '' : ' grey') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
         ['', 'urgent','high','medium','low'].map(function(p){
-          return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
+          return '<option value="' + p + '"' + (p===priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
         }).join('') +
       '</select>']);
 
@@ -4351,7 +4679,7 @@
 
     return '' +
     '<div class="job-row-wrap priority-' + priority + '">' +
-      '<div class="job-row priority-' + priority + (isDueSoon(t) ? ' due-flash' : '') + (t.justReassigned ? ' just-reassigned' : '') + apptUrgencyClass(t) + '" data-id="' + t.id + '">' +
+      '<div class="job-row priority-' + priority + (t.justReassigned ? ' just-reassigned' : '') + urgencyBorderClass(t) + '" data-id="' + t.id + '">' +
         '<div class="jc jc-task" onclick="EP.toggleExpand(\'' + t.id + '\')" title="Click to open — edit name, address, phone, email, and more inside">' +
           moveButtonsHtml(t) +
           '<span class="job-chevron' + (isExpanded ? ' open' : '') + '">&#9656;</span>' +
@@ -4371,7 +4699,7 @@
             ? '<button type="button" class="voice-log-btn" title="Logged Submission" onclick="event.stopPropagation(); EP.openSubmissionLog(\'' + t.id + '\')">VIEW</button>'
             : '<select class="row-quick-select badge-select ' + (priority || 'none') + '" onclick="event.stopPropagation()" onchange="EP.updateField(\'' + t.id + '\',\'priority\', this.value)">' +
                 ['', 'urgent','high','medium','low'].map(function(p){
-                  return '<option value="' + p + '"' + (p===t.priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
+                  return '<option value="' + p + '"' + (p===priority?' selected':'') + '>' + PRIORITY_LABEL[p] + '</option>';
                 }).join('') +
               '</select>') +
         '</div>' +
@@ -4556,6 +4884,7 @@
     notesToggleVoice: notesToggleVoice,
     voiceLogToggle: voiceLogToggle,
     talkAddJob: talkAddJob,
+    cancelWizard: cancelWizard,
     talkChangeUpdate: talkChangeUpdate,
     autofillNewAddress: autofillNewAddress,
     autofillTaskAddress: autofillTaskAddress,
