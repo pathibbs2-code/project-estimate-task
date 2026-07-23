@@ -689,7 +689,7 @@
     font-family: 'Inter', sans-serif;
     font-size: 11px; font-weight: 700;
     padding: 4px 9px;
-    border-radius: 6px;
+    border-radius: 999px;
     cursor: pointer;
     background: var(--medium-soft); color: var(--medium); border: 1px solid var(--medium);
     white-space: nowrap;
@@ -1310,10 +1310,10 @@
   }
   .voice-log-title{ font-size: 12.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
   .voice-log-btn{
-    display: flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     font-family: 'Inter', sans-serif;
     font-size: 12px; font-weight: 700;
-    padding: 6px 12px;
+    padding: 7px 22px;
     border-radius: 999px;
     cursor: pointer;
     background: var(--medium-soft); color: var(--medium); border: 1px solid var(--medium);
@@ -1370,23 +1370,26 @@
   .update-banner{
     position: fixed;
     left: 50%;
-    bottom: -80px;
-    transform: translateX(-50%);
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(150%);
     z-index: 200;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 14px;
+    justify-content: center;
+    gap: 8px 14px;
     background: var(--ink);
     color: #fff;
-    padding: 12px 16px 12px 18px;
+    padding: 12px 16px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
     font-size: 13.5px;
     font-weight: 600;
-    transition: bottom 0.35s ease;
-    max-width: 92vw;
+    transition: transform 0.35s ease;
+    max-width: min(92vw, 480px);
+    text-align: center;
   }
-  .update-banner.open{ bottom: 20px; }
+  .update-banner.open{ transform: translateX(-50%) translateY(0); }
   .update-banner button{
     font-family: 'Inter', sans-serif;
     font-size: 12.5px; font-weight: 700;
@@ -2866,7 +2869,8 @@
   // A browser tab that's already open has no way of knowing Vercel just
   // deployed something new — it just keeps running whatever it originally
   // loaded. This fingerprints the actual deployed file content on load,
-  // then periodically re-fetches it (bypassing any cache) and compares.
+  // then periodically re-fetches it (bypassing any cache — including a
+  // CDN in front of it, not just the browser's own cache) and compares.
   // If it's different, a dismissible banner offers a refresh — nothing
   // reloads automatically, so it never interrupts something like the
   // voice wizard or a note mid-edit.
@@ -2881,24 +2885,72 @@
     return hash;
   }
 
-  function fetchLiveVersionHash(){
-    return fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' })
-      .then(function(r){ return r.text(); })
-      .then(function(text){ return simpleHash(text); });
+  function fetchLiveVersionHash(url){
+    // fetch's cache:'no-store' only stops the BROWSER from using a cached
+    // copy — it says nothing to any CDN sitting in front of the site. The
+    // explicit no-cache headers plus a unique query string are what
+    // actually force a fresh copy past something like Vercel's edge cache.
+    var bustUrl = url + (url.indexOf('?') === -1 ? '?' : '&') + '_v=' + Date.now() + '-' + Math.floor(Math.random() * 1e6);
+    return fetch(bustUrl, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+    }).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + bustUrl);
+      return r.text();
+    }).then(function(text){ return simpleHash(text); });
   }
 
+  // Different hosting setups can serve the "current page" at slightly
+  // different paths than location.pathname suggests (trailing slash
+  // handling, rewrites, etc.) — try a couple of reasonable candidates
+  // before giving up, and remember whichever one actually worked so
+  // later checks don't have to rediscover it.
+  var versionCheckUrl = null;
+  var VERSION_CHECK_CANDIDATES = [location.pathname, location.pathname.replace(/\/$/, '') + '/index.html', '/', '/index.html'];
+
+  function fetchLiveVersionHashWithFallback(){
+    if (versionCheckUrl) return fetchLiveVersionHash(versionCheckUrl);
+    var candidates = VERSION_CHECK_CANDIDATES.slice();
+    function tryNext(){
+      if (!candidates.length) return Promise.reject(new Error('all candidate URLs failed'));
+      var url = candidates.shift();
+      return fetchLiveVersionHash(url).then(function(h){
+        versionCheckUrl = url; // this one worked — stick with it
+        return h;
+      }).catch(function(){ return tryNext(); });
+    }
+    return tryNext();
+  }
+
+  var versionCheckAttempts = 0;
+  var VERSION_CHECK_MAX_ATTEMPTS = 3;
+
   function captureCurrentVersion(){
-    fetchLiveVersionHash().then(function(h){ currentVersionHash = h; }).catch(function(){});
+    fetchLiveVersionHashWithFallback().then(function(h){
+      currentVersionHash = h;
+      console.log('[version-check] baseline captured from', versionCheckUrl, ':', h);
+    }).catch(function(e){
+      versionCheckAttempts++;
+      if (versionCheckAttempts >= VERSION_CHECK_MAX_ATTEMPTS){
+        console.warn('[version-check] giving up after ' + versionCheckAttempts + ' attempts — update notifications are disabled for this session. Last error:', e);
+        return;
+      }
+      console.error('[version-check] failed to capture baseline (attempt ' + versionCheckAttempts + '/' + VERSION_CHECK_MAX_ATTEMPTS + '), retrying in 15s:', e);
+      setTimeout(captureCurrentVersion, 15000);
+    });
   }
 
   function checkForNewVersion(){
     if (currentVersionHash === null || updateBannerDismissed) return;
-    fetchLiveVersionHash().then(function(h){
+    fetchLiveVersionHashWithFallback().then(function(h){
+      console.log('[version-check] live hash:', h, '| baseline:', currentVersionHash, '| changed:', h !== currentVersionHash);
       if (h !== currentVersionHash){
         var el = document.getElementById('update-banner');
         if (el) el.classList.add('open');
       }
-    }).catch(function(){});
+    }).catch(function(e){
+      console.error('[version-check] check failed:', e);
+    });
   }
 
   function reloadForUpdate(){
@@ -3646,7 +3698,8 @@
   // silence-detection decides when the person has finished talking,
   // which is exactly the "room to breathe" a single long continuous
   // stream doesn't give.
-  function wizardListen(onResult){
+  function wizardListen(onResult, retriesLeft){
+    if (retriesLeft === undefined) retriesLeft = 2;
     var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec){
       showToast("🎙️ Voice dictation isn't supported in this browser — try Chrome or Edge.");
@@ -3657,22 +3710,68 @@
     wizardRecognition.continuous = false;
     wizardRecognition.interimResults = false;
     wizardRecognition.lang = 'en-US';
-    wizardRecognition.onresult = function(e){
+    var settled = false;
+
+    function finish(text){
+      if (settled) return;
+      settled = true;
       wizardListening = false;
       updateWizardStatus('🔊 …');
-      onResult(e.results[0][0].transcript.trim());
-    };
-    wizardRecognition.onerror = function(){
+      if (text && /\bsubmit\b/i.test(text)){
+        offerSubmitNow(onResult);
+      } else {
+        onResult(text);
+      }
+    }
+
+    function retryOrGiveUp(){
+      if (settled) return;
+      settled = true;
       wizardListening = false;
-      updateWizardStatus('Didn\'t catch that — tap the mic to try again.');
+      if (retriesLeft > 0){
+        logWizard('system', "Didn't catch that — let's try again.");
+        speak("Sorry, I didn't catch that.", function(){ wizardListen(onResult, retriesLeft - 1); });
+      } else {
+        updateWizardStatus('Having trouble hearing you — tap the mic to try again.');
+        logWizard('system', 'Having trouble hearing you — tap "Talk Add Job" again whenever you\'re ready.');
+      }
+    }
+
+    wizardRecognition.onresult = function(e){
+      finish(e.results[0][0].transcript.trim());
     };
-    wizardRecognition.onend = function(){ wizardListening = false; };
+    wizardRecognition.onerror = function(){ retryOrGiveUp(); };
+    wizardRecognition.onend = function(){
+      wizardListening = false;
+      // Covers the case where the browser just goes quiet — no result and
+      // no error event at all — so the wizard never hangs indefinitely
+      // waiting for something that isn't coming.
+      setTimeout(retryOrGiveUp, 300);
+    };
     // A short beat between the question finishing and the mic opening.
     setTimeout(function(){
       wizardListening = true;
       updateWizardStatus('🎙️ Listening…');
-      try{ wizardRecognition.start(); } catch(e){ /* already running or blocked — ignore */ }
+      try{ wizardRecognition.start(); } catch(e){ retryOrGiveUp(); }
     }, 500);
+  }
+
+  // Lets someone say "submit" at any point in the wizard — not just at
+  // final review — to jump straight to finishing the job with whatever
+  // has been collected so far.
+  function offerSubmitNow(resumeOnResult){
+    logWizard('system', 'Submit requested.');
+    speak('Would you like to submit now, or continue with the remaining details?', function(){
+      wizardListen(function(text){
+        logWizard('answer', text);
+        if (/\bcontinue\b/i.test(text) || /\bno\b/i.test(text)){
+          logWizard('system', 'Continuing.');
+          beginWizardField(wizardStepIndex);
+        } else {
+          finalizeWizardJob();
+        }
+      });
+    });
   }
 
   // Strips carrier words ("add job", "job", "the job is", "name is")
@@ -4985,6 +5084,7 @@
     cancelWizard: cancelWizard,
     reloadForUpdate: reloadForUpdate,
     dismissUpdateBanner: dismissUpdateBanner,
+    checkForNewVersion: checkForNewVersion,
     talkChangeUpdate: talkChangeUpdate,
     autofillNewAddress: autofillNewAddress,
     autofillTaskAddress: autofillTaskAddress,
