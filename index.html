@@ -1366,6 +1366,29 @@
   .wizard-log-ask{ background: var(--medium-soft); color: var(--medium); font-weight: 600; }
   .wizard-log-answer{ background: #F1F1EC; color: var(--ink); margin-left: 18px; }
   .wizard-log-system{ color: var(--ink-soft); font-size: 11.5px; font-style: italic; padding: 2px 12px; }
+  .wizard-live{
+    margin: 0 20px 10px;
+    min-height: 20px;
+    font-size: 13.5px;
+    font-style: italic;
+    color: var(--medium);
+    text-align: center;
+  }
+  .wizard-actions{
+    display: flex;
+    justify-content: center;
+    padding: 4px 20px 20px;
+  }
+  .wizard-actions:empty{ padding: 0; }
+  .wizard-done-btn{
+    font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 700;
+    padding: 9px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: var(--urgent); color: #fff; border: 1px solid var(--urgent);
+    animation: alarm-flash 1s ease-in-out infinite;
+  }
 
   .update-banner{
     position: fixed;
@@ -1731,7 +1754,9 @@
         <button class="notes-modal-close" onclick="EP.cancelWizard()">&#10005;</button>
       </div>
       <div class="wizard-status" id="wizard-status">🔊 …</div>
+      <div class="wizard-live" id="wizard-live"></div>
       <div class="wizard-log" id="wizard-log"></div>
+      <div class="wizard-actions" id="wizard-actions"></div>
     </div>
   </div>
 
@@ -1922,7 +1947,7 @@
       <div class="group-header" onclick="EP.toggleGroup('sentComplete')">
         <span class="group-chevron" id="chev-sentComplete">&#9662;</span>
         <span class="group-title">Job Submitted</span>
-        <span class="badge-count" id="count-sentComplete">0</span><span class="group-header-spacer"></span><select class="table-sort-select" onclick="event.stopPropagation()" onchange="EP.setSortMode('sentComplete', this.value)"><option value="importance">Sort: Importance</option><option value="name-asc">Job Name (A–Z)</option><option value="name-desc">Job Name (Z–A)</option><option value="date-asc">Date Added (Oldest)</option><option value="date-desc">Date Added (Newest)</option></select>
+        <span class="badge-count" id="count-sentComplete">0</span><span class="group-header-spacer"></span><select class="table-sort-select" onclick="event.stopPropagation()" onchange="EP.setSortMode('sentComplete', this.value)"><option value="importance">Sort: Most Recent</option><option value="name-asc">Job Name (A–Z)</option><option value="name-desc">Job Name (Z–A)</option><option value="date-asc">Date Added (Oldest)</option><option value="date-desc">Date Added (Newest)</option></select>
       </div>
       <div class="group-body" id="groupbody-sentComplete">
         <div class="mobile-scroll-hint">&#10231; Swipe left/right to see more columns</div>
@@ -2644,15 +2669,45 @@
     return '';
   }
 
+  // How close a deadline is now outranks raw priority for sort purposes —
+  // a job due tomorrow sorts right under one due today, even if some
+  // unrelated job elsewhere is manually marked Urgent with no deadline in
+  // sight. Lower number = closer to the top.
+  function dueUrgencyRank(t){
+    var apptTier = apptUrgencyTier(t);
+    if (apptTier === 'flash') return 0;
+    if (apptTier === 'red') return 1;
+    var tier = dueUrgencyTier(t);
+    if (tier === 'overdue') return 2;
+    if (tier === 'today') return 3;
+    if (tier === 'tomorrow') return 4;
+    if (tier === 'soon') return 5;
+    return 6; // nothing pressing — falls back to plain priority
+  }
+
   function sortRank(t){
     var stored = PRIORITY_ORDER[t.priority];
     var apptPriority = apptDisplayPriority(t);
-    if (apptPriority) return PRIORITY_ORDER[apptPriority];
-    var tier = dueUrgencyTier(t);
-    if (tier === "today" || tier === "overdue") return PRIORITY_ORDER.urgent;
-    if (tier === "tomorrow") return Math.min(stored, PRIORITY_ORDER.high);
-    if (tier === "soon") return Math.min(stored, PRIORITY_ORDER.medium);
-    return stored;
+    var priorityRank;
+    if (apptPriority){
+      priorityRank = PRIORITY_ORDER[apptPriority];
+    } else {
+      var tier = dueUrgencyTier(t);
+      if (tier === "today" || tier === "overdue") priorityRank = PRIORITY_ORDER.urgent;
+      else if (tier === "tomorrow") priorityRank = Math.min(stored, PRIORITY_ORDER.high);
+      else if (tier === "soon") priorityRank = Math.min(stored, PRIORITY_ORDER.medium);
+      else priorityRank = stored;
+    }
+    return dueUrgencyRank(t) * 10 + priorityRank;
+  }
+
+  // The timestamp of a job's latest arrival in Job Submitted — its most
+  // recent Submitted or Re-Submitted entry, or if that's somehow missing,
+  // whenever it was last touched.
+  function mostRecentSubmissionAt(t){
+    var log = t.submissionLog || [];
+    if (log.length) return log[log.length - 1].at;
+    return t.updatedAt || t.createdAt || 0;
   }
 
   function relativeTime(ts){
@@ -3378,7 +3433,6 @@
       jobTypeSel.value, assignSel.value
     );
     tasks.push(t);
-    expanded[t.id] = true;
     input.value = "";
     addressInput.value = "";
     cityInput.value = "";
@@ -3646,19 +3700,35 @@
   var voiceLogTaskId = null;
   var voiceLogParts = [];
 
-  // ---------- Talk Add Job: guided voice wizard ----------
-  // Rather than one long continuous dictation, this asks one question at
-  // a time, waits for a real pause before treating an answer as finished
-  // (each turn is its own listen session, so there's a natural breath
-  // between question and answer, and between answers), reads back what
-  // it heard for a yes/no confirmation, and only creates the job after a
-  // final "should I add this?" check — so nothing gets created on a
-  // misheard word, and anything can be corrected before it's real.
+  // ---------- Talk Add Job: free-form voice capture ----------
+  // Talk once, naturally — mention the job type, name, priority, address,
+  // whatever's relevant — then say "send" (or tap Done Talking) when
+  // you're finished. It's parsed all at once by the same keyword engine
+  // used everywhere else in the voice system (extractFieldsFromTranscript,
+  // shared with Voice Log and Talk-Change-Update), now with common
+  // synonyms recognized too — "asap"/"rush" for urgent, "house" for
+  // residential, "done" for completed, and so on. If residential/
+  // commercial was never mentioned, it asks that one question before
+  // moving on. Then it reads back only the fields it actually found
+  // (nothing guessed, nothing invented) for a final "should I create
+  // this, or change something?" before the job is real.
   var wizardTaskDraft = null;
-  var wizardSteps = [];
-  var wizardStepIndex = 0;
   var wizardRecognition = null;
   var wizardListening = false;
+  var wizardFreeformRecognition = null;
+  var wizardFreeformParts = [];
+  var wizardVoicesWarmed = false;
+
+  // Some mobile browsers need getVoices() called (and the voiceschanged
+  // event given a chance to fire) before the first utterance will
+  // reliably play — this warms that up the moment Talk Add Job opens
+  // instead of on the very first speak() call.
+  function warmUpSpeechVoices(){
+    if (wizardVoicesWarmed || !window.speechSynthesis) return;
+    wizardVoicesWarmed = true;
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = function(){ window.speechSynthesis.getVoices(); };
+  }
 
   function speak(text, onDone){
     try{
@@ -3666,13 +3736,20 @@
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.rate = 0.98;
+      var voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length){
+        var preferred = voices.find(function(v){ return /en-US/i.test(v.lang) && /female|samantha|zira|google us english/i.test(v.name); })
+          || voices.find(function(v){ return /en-US/i.test(v.lang); })
+          || voices[0];
+        if (preferred) u.voice = preferred;
+      }
       var done = false;
       var finish = function(){ if (done) return; done = true; if (onDone) onDone(); };
       u.onend = finish;
       u.onerror = finish;
       window.speechSynthesis.speak(u);
       // Safety net: some mobile browsers silently drop onend — never let
-      // the wizard hang forever waiting for it.
+      // the flow hang forever waiting for it.
       setTimeout(finish, Math.max(1800, text.length * 90));
     } catch(e){ if (onDone) onDone(); }
   }
@@ -3694,10 +3771,32 @@
     if (el) el.textContent = text;
   }
 
-  // One listen per turn (continuous = false) — the browser's own
-  // silence-detection decides when the person has finished talking,
-  // which is exactly the "room to breathe" a single long continuous
-  // stream doesn't give.
+  function updateWizardLive(text){
+    var el = document.getElementById('wizard-live');
+    if (el) el.textContent = text;
+  }
+
+  function showWizardDoneButton(){
+    var el = document.getElementById('wizard-actions');
+    if (el) el.innerHTML = '<button type="button" class="wizard-done-btn" onclick="EP.stopFreeformDictation()">⏹ Done Talking</button>';
+  }
+
+  function hideWizardDoneButton(){
+    var el = document.getElementById('wizard-actions');
+    if (el) el.innerHTML = '';
+  }
+
+  // Fillers don't carry meaning, but left in they can occasionally sit
+  // between a trigger word and its value ("priority, um, high") and break
+  // a match — stripped before anything else touches the transcript.
+  function stripFillerWords(text){
+    return text.replace(/\b(um+|uh+|erm+|hm+|like|you know)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  // A single turn — used for the one follow-up question (job type, if it
+  // wasn't mentioned) and the review/correction loop. continuous=false
+  // means the browser's own silence-detection decides when the person is
+  // done talking. Auto-retries (bounded) instead of ever hanging silently.
   function wizardListen(onResult, retriesLeft){
     if (retriesLeft === undefined) retriesLeft = 2;
     var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3717,11 +3816,7 @@
       settled = true;
       wizardListening = false;
       updateWizardStatus('🔊 …');
-      if (text && /\bsubmit\b/i.test(text)){
-        offerSubmitNow(onResult);
-      } else {
-        onResult(text);
-      }
+      onResult(text);
     }
 
     function retryOrGiveUp(){
@@ -3737,18 +3832,12 @@
       }
     }
 
-    wizardRecognition.onresult = function(e){
-      finish(e.results[0][0].transcript.trim());
-    };
+    wizardRecognition.onresult = function(e){ finish(e.results[0][0].transcript.trim()); };
     wizardRecognition.onerror = function(){ retryOrGiveUp(); };
     wizardRecognition.onend = function(){
       wizardListening = false;
-      // Covers the case where the browser just goes quiet — no result and
-      // no error event at all — so the wizard never hangs indefinitely
-      // waiting for something that isn't coming.
       setTimeout(retryOrGiveUp, 300);
     };
-    // A short beat between the question finishing and the mic opening.
     setTimeout(function(){
       wizardListening = true;
       updateWizardStatus('🎙️ Listening…');
@@ -3756,116 +3845,134 @@
     }, 500);
   }
 
-  // Lets someone say "submit" at any point in the wizard — not just at
-  // final review — to jump straight to finishing the job with whatever
-  // has been collected so far.
-  function offerSubmitNow(resumeOnResult){
-    logWizard('system', 'Submit requested.');
-    speak('Would you like to submit now, or continue with the remaining details?', function(){
-      wizardListen(function(text){
-        logWizard('answer', text);
-        if (/\bcontinue\b/i.test(text) || /\bno\b/i.test(text)){
-          logWizard('system', 'Continuing.');
-          beginWizardField(wizardStepIndex);
+  // The main capture — continuous and interim results on, so it keeps
+  // listening through natural pauses, "um"s, and thinking gaps instead of
+  // cutting off. Ends when the person says "send" or taps Done Talking;
+  // if the browser's own silence timeout ends it first, that's fine too.
+  function captureFreeformJobDictation(){
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec){
+      showToast("🎙️ Voice dictation isn't supported in this browser — try Chrome or Edge.");
+      endWizard(false);
+      return;
+    }
+    wizardFreeformParts = [];
+    updateWizardLive('');
+    wizardFreeformRecognition = new SpeechRec();
+    wizardFreeformRecognition.continuous = true;
+    wizardFreeformRecognition.interimResults = true;
+    wizardFreeformRecognition.lang = 'en-US';
+    wizardFreeformRecognition.onstart = function(){
+      wizardListening = true;
+      updateWizardStatus('🎙️ Listening — take your time…');
+      showWizardDoneButton();
+    };
+    wizardFreeformRecognition.onresult = function(e){
+      var interim = '';
+      var stopNow = false;
+      for (var i = e.resultIndex; i < e.results.length; i++){
+        var chunk = e.results[i][0].transcript;
+        if (e.results[i].isFinal){
+          var cleaned = stripFillerWords(chunk.trim());
+          if (cleaned) wizardFreeformParts.push(cleaned);
+          if (/\bsend\b/i.test(chunk)) stopNow = true;
         } else {
-          finalizeWizardJob();
+          interim = chunk;
         }
-      });
-    });
+      }
+      updateWizardLive((wizardFreeformParts.join(' ') + ' ' + interim).trim());
+      if (stopNow) wizardFreeformRecognition.stop();
+    };
+    wizardFreeformRecognition.onerror = function(){ wizardListening = false; };
+    wizardFreeformRecognition.onend = function(){
+      wizardListening = false;
+      hideWizardDoneButton();
+      updateWizardLive('');
+      finishFreeformDictation();
+    };
+    setTimeout(function(){
+      try{ wizardFreeformRecognition.start(); } catch(e){ finishFreeformDictation(); }
+    }, 400);
   }
 
-  // Strips carrier words ("add job", "job", "the job is", "name is")
-  // so only the actual name is kept, however the person phrases it.
-  function extractJobName(text){
-    var t = text.trim();
-    t = t.replace(/^(please\s+)?add\s+job\s+/i, '');
-    t = t.replace(/^(the\s+)?job\s+(name\s+)?(is\s+)?/i, '');
-    t = t.replace(/^name\s+(is\s+)?/i, '');
-    t = t.trim();
-    if (!t) return '';
-    return t.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+  function stopFreeformDictation(){
+    if (wizardFreeformRecognition){ try{ wizardFreeformRecognition.stop(); } catch(e){} }
   }
 
-  function matchWizardFieldName(text){
-    text = text.toLowerCase();
-    if (/name/.test(text)) return 'customer';
-    if (/type|residential|commercial/.test(text)) return 'jobType';
-    if (/priorit/.test(text)) return 'priority';
-    if (/address/.test(text)) return 'address';
-    return null;
+  function finishFreeformDictation(){
+    var transcript = wizardFreeformParts.join(' ').replace(/\bsend\b\s*$/i, '').trim();
+    wizardFreeformParts = [];
+    if (!transcript){
+      logWizard('system', "Didn't catch anything — let's try again.");
+      speak("Sorry, I didn't catch that. Please tell me about the job.", function(){ captureFreeformJobDictation(); });
+      return;
+    }
+    logWizard('answer', transcript);
+    var extracted = extractFieldsFromTranscript(transcript, wizardTaskDraft.jobType);
+    var changes = applyExtractedToDraft(wizardTaskDraft, extracted);
+    if (changes.length) logWizard('system', 'Got it: ' + changes.join(' · '));
+    checkJobTypeThenReview();
   }
 
-  function beginWizardField(index){
-    if (index >= wizardSteps.length){ beginWizardReview(); return; }
-    wizardStepIndex = index;
-    var field = wizardSteps[index];
-    var prompt = typeof field.prompt === 'function' ? field.prompt(wizardTaskDraft) : field.prompt;
+  // The one guaranteed question: if residential/commercial was never
+  // mentioned, this is what decides which table the job lands in.
+  function checkJobTypeThenReview(){
+    if (wizardTaskDraft.jobType === 'residential' || wizardTaskDraft.jobType === 'commercial'){
+      beginWizardReview();
+      return;
+    }
+    var prompt = 'Is this a residential or commercial job?';
     logWizard('ask', prompt);
-    updateWizardStatus('🔊 …');
     speak(prompt, function(){
       wizardListen(function(text){
         logWizard('answer', text);
-        handleWizardAnswer(field, text);
-      });
-    });
-  }
-
-  function handleWizardAnswer(field, text){
-    if (field.optional && /^\s*skip\b/i.test(text)){
-      wizardTaskDraft[field.key] = '';
-      logWizard('system', field.label + ' skipped.');
-      beginWizardField(wizardStepIndex + 1);
-      return;
-    }
-    var value = field.parse(text);
-    if (value === null || value === ''){
-      var reprompt = "Sorry, I didn't catch that. " + (typeof field.prompt === 'function' ? field.prompt(wizardTaskDraft) : field.prompt);
-      logWizard('system', "Didn't catch that — asking again.");
-      speak(reprompt, function(){
-        wizardListen(function(t2){
-          logWizard('answer', t2);
-          handleWizardAnswer(field, t2);
-        });
-      });
-      return;
-    }
-    var desc = field.describe(value);
-    speak('Got it — ' + desc + '. Is that correct?', function(){
-      wizardListen(function(yn){
-        logWizard('answer', yn);
-        if (/\b(no|nope|not|wrong|incorrect)\b/i.test(yn)){
-          logWizard('system', "Let's try that again.");
-          beginWizardField(wizardStepIndex);
-        } else {
-          if (field.applyExtra){ field.applyExtra(value, wizardTaskDraft); }
-          else { wizardTaskDraft[field.key] = value; }
-          logWizard('system', field.label + ' set: ' + desc);
-          beginWizardField(wizardStepIndex + 1);
+        var lower = (text || '').toLowerCase();
+        if (/resident|house|home/.test(lower)) wizardTaskDraft.jobType = 'residential';
+        else if (/commerc|business|office/.test(lower)) wizardTaskDraft.jobType = 'commercial';
+        if (!wizardTaskDraft.jobType){
+          logWizard('system', "Didn't catch that — let's try again.");
+          checkJobTypeThenReview();
+          return;
         }
+        logWizard('system', 'Job Type → ' + wizardTaskDraft.jobType.charAt(0).toUpperCase() + wizardTaskDraft.jobType.slice(1));
+        beginWizardReview();
       });
     });
   }
 
+  // Reads back only what was actually found — nothing guessed, nothing
+  // listed just because it's a known field. Skips straight past anything
+  // that was never mentioned.
   function beginWizardReview(){
     var d = wizardTaskDraft;
     var bits = [];
     bits.push(d.customer || 'this job');
-    bits.push(d.jobType === 'commercial' ? 'a commercial job' : 'a residential job');
+    if (d.jobType === 'commercial') bits.push('a commercial job');
+    else if (d.jobType === 'residential') bits.push('a residential job');
     if (d.priority) bits.push('priority ' + PRIORITY_LABEL[d.priority]);
     if (d.address) bits.push('at ' + d.address);
+    if (d.quoteComplete) bits.push('quote ' + STATUS_LABEL[d.quoteComplete].toLowerCase());
+    if (d.manualCreated) bits.push('manual ' + STATUS_LABEL[d.manualCreated].toLowerCase());
+    if (d.takeoffComplete) bits.push('takeoff ' + STATUS_LABEL[d.takeoffComplete].toLowerCase());
+    if (d.contactRepsPricing) bits.push('rep price ' + STATUS_LABEL[d.contactRepsPricing].toLowerCase());
+    if (d.sentTo){
+      var opt = SENT_TO_OPTIONS.find(function(o){ return o.value === d.sentTo; });
+      if (opt) bits.push('sent to ' + opt.label);
+    }
     var summary = bits.join(', ');
     logWizard('system', 'Reviewing: ' + summary);
-    speak('Here is what I have: ' + summary + '. Should I add this job?', function(){
+    speak('Here is what I have: ' + summary + '. Should I create this job, or would you like to change something?', function(){
       wizardListen(function(text){
         logWizard('answer', text);
-        if (/\b(no|nope|not|wrong)\b/i.test(text)){
-          speak('What would you like to change — job name, type, priority, or address?', function(){
+        var lower = (text || '').toLowerCase();
+        if (/\b(no|change|wrong|incorrect|not right)\b/.test(lower) && !/\byes\b/.test(lower)){
+          speak('What would you like to change?', function(){
             wizardListen(function(t2){
               logWizard('answer', t2);
-              var key = matchWizardFieldName(t2);
-              var idx = key ? wizardSteps.findIndex(function(f){ return f.key === key; }) : -1;
-              if (idx !== -1){ beginWizardField(idx); return; }
-              logWizard('system', "Didn't catch which field — reviewing again.");
+              var extracted2 = extractFieldsFromTranscript(t2, wizardTaskDraft.jobType);
+              var changes2 = applyExtractedToDraft(wizardTaskDraft, extracted2);
+              if (changes2.length){ logWizard('system', 'Updated: ' + changes2.join(' · ')); }
+              else { logWizard('system', "Didn't catch a specific change — let's review again."); }
               beginWizardReview();
             });
           });
@@ -3878,7 +3985,8 @@
 
   function finalizeWizardJob(){
     var d = wizardTaskDraft;
-    var t = blankTask(d.customer || '', d.priority || '', d.address || '', d.city || '', d.state || '', d.zip || '', '', '', d.jobType || 'residential', '');
+    var t = blankTask(d.customer || '', d.priority || '', d.address || '', d.city || '', d.state || '', d.zip || '', d.phone || '', d.email || '', d.jobType || 'residential', '');
+    if (d.sentTo) t.sentTo = d.sentTo;
     tasks.push(t);
     scheduleSave();
     logWizard('system', '✅ Job added: ' + (t.customer || 'Untitled job'));
@@ -3891,27 +3999,31 @@
     var overlay = document.getElementById('voice-wizard-overlay');
     var log = document.getElementById('wizard-log');
     if (log) log.innerHTML = '';
+    updateWizardLive('');
+    hideWizardDoneButton();
     updateWizardStatus('🔊 …');
     if (overlay) overlay.classList.add('open');
+    warmUpSpeechVoices();
   }
 
   function endWizard(success, taskId){
     if (wizardRecognition){ try{ wizardRecognition.abort(); } catch(e){} }
+    if (wizardFreeformRecognition){ try{ wizardFreeformRecognition.abort(); } catch(e){} }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     wizardListening = false;
     var overlay = document.getElementById('voice-wizard-overlay');
     if (overlay) overlay.classList.remove('open');
+    hideWizardDoneButton();
     wizardTaskDraft = null;
-    wizardSteps = [];
-    if (success && taskId){
-      Object.keys(expanded).forEach(function(k){ expanded[k] = false; });
-      expanded[taskId] = true;
-    }
     render();
     if (success && taskId){
       setTimeout(function(){
         var rowEl = document.querySelector('.job-row[data-id="' + taskId + '"]');
-        if (rowEl) rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (rowEl){
+          rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          rowEl.classList.add('search-flash');
+          setTimeout(function(){ rowEl.classList.remove('search-flash'); }, 2000);
+        }
       }, 150);
     }
   }
@@ -3921,56 +4033,19 @@
     speak('Okay, cancelled.', function(){ endWizard(false); });
   }
 
-  // jobType passed in from a specific table's button skips the type
+  // jobType passed in from a specific table's button skips the follow-up
   // question entirely (already unambiguous); the top-level button and
-  // Ryan Review's pass nothing, so the wizard asks first.
+  // Ryan Review's pass nothing, so it's asked only if never mentioned.
   function talkAddJob(jobType){
     wizardTaskDraft = { jobType: jobType || '' };
-    wizardSteps = [];
-    if (!jobType){
-      wizardSteps.push({
-        key: 'jobType', label: 'Job Type', optional: false,
-        prompt: 'Is this a residential or commercial job?',
-        parse: function(text){
-          text = text.toLowerCase();
-          if (/resident/.test(text)) return 'residential';
-          if (/commerc/.test(text)) return 'commercial';
-          return null;
-        },
-        describe: function(v){ return v.charAt(0).toUpperCase() + v.slice(1); }
-      });
-    }
-    wizardSteps.push({
-      key: 'customer', label: 'Job Name', optional: false,
-      prompt: "What is the job's name?",
-      parse: function(text){ var n = extractJobName(text); return n || null; },
-      describe: function(v){ return v; }
-    });
-    wizardSteps.push({
-      key: 'priority', label: 'Priority', optional: true,
-      prompt: 'What priority — urgent, high, medium, or low? Or say skip.',
-      parse: function(text){
-        var m = text.toLowerCase().match(/\b(urgent|high|medium|low)\b/);
-        return m ? m[1] : null;
-      },
-      describe: function(v){ return PRIORITY_LABEL[v]; }
-    });
-    wizardSteps.push({
-      key: 'address', label: 'Address', optional: true,
-      prompt: 'What is the job address? Or say skip.',
-      parse: function(text){ return text.trim() || null; },
-      describe: function(v){ return v; },
-      applyExtra: function(value, job){
-        var p = parseAddress(value);
-        job.address = p.street || value;
-        job.city = p.city || '';
-        job.state = p.state || '';
-        job.zip = p.zip || '';
-      }
-    });
     openWizardModal();
-    logWizard('system', 'Starting Talk Add Job…');
-    beginWizardField(0);
+    var intro = jobType
+      ? "Please tell me about the job — name, priority, address, and anything else. Say \"send\" when you're done."
+      : "Please tell me about the job — you can mention whether it's residential or commercial, the job name, priority, address, and anything else. Say \"send\" when you're done.";
+    logWizard('ask', intro);
+    speak(intro, function(){
+      captureFreeformJobDictation();
+    });
   }
 
   // Job Submitted isn't a place to create new jobs — everything there
@@ -4116,14 +4191,67 @@
   // applies whatever it finds through the normal updateField() path, so
   // every existing automation (routing, priority reset, etc.) still fires
   // exactly as if it had been clicked by hand.
-  function parseVoiceLog(t, transcriptRaw){
-    var text = ' ' + transcriptRaw.toLowerCase().replace(/[^\w\s@.,'\-\/]/g, ' ') + ' ';
-    var changes = [];
+  // ---------- Shared voice-parsing engine ----------
+  // Every keyword listed here plus its aliases are recognized wherever
+  // this app takes voice input for job fields. Aliases let common,
+  // natural phrasing map onto the same canonical value — "asap" and
+  // "urgent" both set the same priority, "house" and "residential" both
+  // pick the same job type, "done" and "completed" both set the same
+  // status — without the person needing to use the exact word shown on
+  // the button.
+  var PRIORITY_ALIASES = [
+    ['urgent', ['urgent', 'asap', 'emergency', 'rush', 'critical', 'right away', 'immediately']],
+    ['high', ['high', 'important']],
+    ['medium', ['medium', 'normal', 'standard']],
+    ['low', ['low', 'whenever', 'no rush', 'not urgent']]
+  ];
+  var JOBTYPE_ALIASES = [
+    ['residential', ['residential', 'house', 'home', 'residence']],
+    ['commercial', ['commercial', 'business', 'office']]
+  ];
+  var STATUS_ALIASES = [
+    ['completed', ['completed', 'complete', 'done', 'finished']],
+    ['in_progress', ['in progress', 'started', 'working on it', 'underway']],
+    ['not_started', ['not started', 'have not started', 'not begun', 'has not started', 'not yet started']],
+    ['na', ['n a', 'not applicable']]
+  ];
 
-    function apply(key, value, label){
-      updateField(t.id, key, value);
-      changes.push(label);
+  function aliasPattern(aliases){
+    var all = [];
+    aliases.forEach(function(pair){ all = all.concat(pair[1]); });
+    all.sort(function(a, b){ return b.length - a.length; }); // longer phrases first so they win over a shorter substring
+    return all.map(function(p){ return p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|');
+  }
+
+  function canonicalFromAlias(matched, aliases){
+    var lower = (matched || '').toLowerCase().trim().replace(/\s+/g, ' ');
+    for (var i = 0; i < aliases.length; i++){
+      if (aliases[i][1].indexOf(lower) !== -1) return aliases[i][0];
     }
+    return null;
+  }
+
+  var FIELD_LOG_LABELS = {
+    jobType: 'Job Type', priority: 'Priority', quoteComplete: 'Quote', manualCreated: 'Manual',
+    takeoffComplete: 'Takeoff', contactRepsPricing: 'Rep Price', sentTo: 'Sent To',
+    customer: 'Customer', address: 'Address', phone: 'Phone', email: 'Email'
+  };
+
+  function describeExtractedValue(key, value){
+    if (key === 'jobType') return value.charAt(0).toUpperCase() + value.slice(1);
+    if (key === 'priority') return PRIORITY_LABEL[value];
+    if (key === 'quoteComplete' || key === 'manualCreated' || key === 'takeoffComplete' || key === 'contactRepsPricing') return STATUS_LABEL[value];
+    if (key === 'sentTo'){ var opt = SENT_TO_OPTIONS.find(function(o){ return o.value === value; }); return opt ? opt.label : value; }
+    return value;
+  }
+
+  // Pure — scans a transcript and returns whatever fields it can find, as
+  // a plain object. No side effects, so the exact same extraction logic
+  // works whether the target is a brand-new job being built up in memory
+  // or an existing one being updated live.
+  function extractFieldsFromTranscript(transcriptRaw, currentJobType){
+    var text = ' ' + transcriptRaw.toLowerCase().replace(/[^\w\s@.,'\-\/]/g, ' ') + ' ';
+    var out = {};
 
     function grab(triggerWords, stopWords){
       var stopGroup = stopWords.join('|');
@@ -4135,38 +4263,41 @@
       return null;
     }
 
-    var fieldTriggers = ['priority', 'address', 'phone', 'email', 'send to', 'sent to', 'quote', 'manual', 'takeoff', 'rep price', 'residential', 'commercial', 'customer', 'job name', 'send'];
+    var fieldTriggers = ['priority', 'address', 'phone', 'email', 'send to', 'sent to', 'quote', 'manual', 'takeoff', 'rep price', 'customer', 'job name', 'send']
+      .concat(JOBTYPE_ALIASES.reduce(function(acc, pair){ return acc.concat(pair[1]); }, []))
+      .concat(PRIORITY_ALIASES.reduce(function(acc, pair){ return acc.concat(pair[1]); }, []));
 
-    // Job type
-    var jt = /\bresidential\b/.test(text) ? 'residential' : /\bcommercial\b/.test(text) ? 'commercial' : null;
-    if (jt && jt !== t.jobType){
-      apply('jobType', jt, 'Job Type → ' + jt.charAt(0).toUpperCase() + jt.slice(1));
+    // Job type (with aliases)
+    var jtMatch = text.match(new RegExp('\\b(' + aliasPattern(JOBTYPE_ALIASES) + ')\\b', 'i'));
+    if (jtMatch){
+      var jtCanon = canonicalFromAlias(jtMatch[1], JOBTYPE_ALIASES);
+      if (jtCanon && jtCanon !== currentJobType) out.jobType = jtCanon;
     }
 
-    // Priority
-    var prMatch = text.match(/priority\s*(?:is|to|of|set to)?\s*(urgent|high|medium|low)\b/) || text.match(/\b(urgent|high|medium|low)\s*priority\b/);
+    // Priority (with aliases)
+    var prAliasGroup = aliasPattern(PRIORITY_ALIASES);
+    var prMatch = text.match(new RegExp('priority\\s*(?:is|to|of|set to)?\\s*(' + prAliasGroup + ')\\b', 'i'))
+      || text.match(new RegExp('\\b(' + prAliasGroup + ')\\s*priority\\b', 'i'));
     if (prMatch){
-      apply('priority', prMatch[1], 'Priority → ' + PRIORITY_LABEL[prMatch[1]]);
+      var prCanon = canonicalFromAlias(prMatch[1], PRIORITY_ALIASES);
+      if (prCanon) out.priority = prCanon;
     }
 
-    // Status-style fields: Quote, Manual, Takeoff, Rep Price
+    // Status-style fields: Quote, Manual, Takeoff, Rep Price (with aliases)
+    var statusAliasGroup = aliasPattern(STATUS_ALIASES);
     var statusFields = [
-      { triggers: ['quote'], key: 'quoteComplete', label: 'Quote' },
-      { triggers: ['manual'], key: 'manualCreated', label: 'Manual' },
-      { triggers: ['takeoff'], key: 'takeoffComplete', label: 'Takeoff' },
-      { triggers: ['rep price', 'rep pricing', 'pricing'], key: 'contactRepsPricing', label: 'Rep Price' }
+      { triggers: ['quote'], key: 'quoteComplete' },
+      { triggers: ['manual'], key: 'manualCreated' },
+      { triggers: ['takeoff'], key: 'takeoffComplete' },
+      { triggers: ['rep price', 'rep pricing', 'pricing'], key: 'contactRepsPricing' }
     ];
     statusFields.forEach(function(f){
       f.triggers.forEach(function(trig){
-        var re = new RegExp('\\b' + trig + '\\b\\s*(?:is|status|set to)?\\s*(not started|in progress|completed|complete|n\\s?\\/?\\s?a)\\b');
+        var re = new RegExp('\\b' + trig + '\\b\\s*(?:is|status|set to)?\\s*(' + statusAliasGroup + ')\\b', 'i');
         var m = text.match(re);
         if (!m) return;
-        var raw = m[1].replace(/\s+/g, ' ').trim();
-        var value = raw === 'not started' ? 'not_started'
-          : raw === 'in progress' ? 'in_progress'
-          : (raw === 'completed' || raw === 'complete') ? 'completed'
-          : 'na';
-        apply(f.key, value, f.label + ' → ' + STATUS_LABEL[value]);
+        var canon = canonicalFromAlias(m[1], STATUS_ALIASES);
+        if (canon) out[f.key] = canon;
       });
     });
 
@@ -4175,42 +4306,69 @@
     if (stMatch){
       var raw = stMatch[1] === 'ryan' ? 'ryan review' : stMatch[1];
       var opt = SENT_TO_OPTIONS.find(function(o){ return o.label.toLowerCase() === raw; });
-      if (opt) apply('sentTo', opt.value, 'Sent To → ' + opt.label);
+      if (opt) out.sentTo = opt.value;
     }
 
     // Customer / Job name
     var custRaw = grab(['customer', 'job name'], fieldTriggers);
     if (custRaw){
-      var custName = custRaw.replace(/\s+/g, ' ').trim().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
-      apply('customer', custName, 'Customer → ' + custName);
+      out.customer = custRaw.replace(/\s+/g, ' ').trim().replace(/\b\w/g, function(c){ return c.toUpperCase(); });
     }
 
     // Address (reuses the same parser the address-autocomplete field uses)
     var addrRaw = grab(['address'], fieldTriggers);
     if (addrRaw){
       var parsed = parseAddress(addrRaw);
-      if (parsed.street){ apply('address', parsed.street, 'Address → ' + parsed.street); }
-      if (parsed.city) updateField(t.id, 'city', parsed.city);
-      if (parsed.state) updateField(t.id, 'state', parsed.state);
-      if (parsed.zip) updateField(t.id, 'zip', parsed.zip);
+      out.address = parsed.street || addrRaw;
+      if (parsed.city) out.city = parsed.city;
+      if (parsed.state) out.state = parsed.state;
+      if (parsed.zip) out.zip = parsed.zip;
     }
 
     // Phone
     var phoneRaw = grab(['phone', 'phone number'], fieldTriggers);
     if (phoneRaw){
       var digits = phoneRaw.replace(/[^\d]/g, '');
-      if (digits.length >= 7){ apply('phone', phoneRaw.trim(), 'Phone → ' + phoneRaw.trim()); }
+      if (digits.length >= 7) out.phone = phoneRaw.trim();
     }
 
     // Email — normalize spoken "at" / "dot"
     var emailRaw = grab(['email'], fieldTriggers);
     if (emailRaw){
       var email = emailRaw.replace(/\s+at\s+/g, '@').replace(/\s+dot\s+/g, '.').replace(/\s+/g, '');
-      if (email.indexOf('@') !== -1) apply('email', email, 'Email → ' + email);
+      if (email.indexOf('@') !== -1) out.email = email;
     }
 
+    return out;
+  }
+
+  var EXTRACT_FIELD_ORDER = ['jobType', 'priority', 'quoteComplete', 'manualCreated', 'takeoffComplete', 'contactRepsPricing', 'sentTo', 'customer', 'address', 'city', 'state', 'zip', 'phone', 'email'];
+
+  function applyExtractedFields(applyFn, extracted){
+    var changes = [];
+    EXTRACT_FIELD_ORDER.forEach(function(key){
+      if (!(key in extracted)) return;
+      var value = extracted[key];
+      applyFn(key, value);
+      if (key === 'city' || key === 'state' || key === 'zip') return; // reported as part of Address, not separately
+      changes.push((FIELD_LOG_LABELS[key] || key) + ' → ' + describeExtractedValue(key, value));
+    });
     return changes;
   }
+
+  // Applies extracted fields to a job that already exists in storage.
+  function parseVoiceLog(t, transcriptRaw){
+    var extracted = extractFieldsFromTranscript(transcriptRaw, t.jobType);
+    return applyExtractedFields(function(key, value){ updateField(t.id, key, value); }, extracted);
+  }
+
+  // Applies extracted fields to a draft object for a job that doesn't
+  // exist yet (Talk Add Job) — same extraction, same field set, just
+  // written straight into the plain object instead of through updateField.
+  function applyExtractedToDraft(draft, extracted){
+    return applyExtractedFields(function(key, value){ draft[key] = value; }, extracted);
+  }
+
 
 
   function toggleExpand(id){
@@ -4247,6 +4405,7 @@
     var t = tasks.find(function(x){ return x.id === taskId; });
     if (!t) return;
     var cat = categoryOf(t);
+    if (cat === 'sentComplete') return; // order there is fixed (most recent submission first), not manually reorderable
     var siblings = sortTasks(tasks.filter(function(x){ return categoryOf(x) === cat; }));
     var idx = siblings.findIndex(function(x){ return x.id === taskId; });
     var targetIdx = idx + direction;
@@ -4606,7 +4765,7 @@
     var dtDateVal = t[dtDateField] || '';
     var dtTimeVal = t[dtTimeField] || '';
     var dtDisplay = (dtDateVal ? dtDateVal : '') + (dtDateVal && dtTimeVal ? ' ' : '') + (dtTimeVal ? formatTime12(dtTimeVal) : '');
-    var dueLabel = t.jobType === 'residential' ? 'Arrival' : 'Bid Due / Time';
+    var dueLabel = t.jobType === 'residential' ? 'Estimate Time / Date' : 'Bid Due / Time';
 
     var rows = [];
     rows.push(['Assigned To', '<span class="mqs-avatars">' + avatarGroupHtml(t) + '</span>']);
@@ -4797,6 +4956,7 @@
   // — handy when two jobs are tied at, say, Medium and you want one listed
   // above the other regardless of when each was added.
   function moveButtonsHtml(t){
+    if (categoryOf(t) === 'sentComplete') return '';
     return '<span class="job-move-buttons" onclick="event.stopPropagation()">' +
       '<button type="button" onclick="EP.moveJob(\'' + t.id + '\', -1)" title="Move up">&#9650;</button>' +
       '<button type="button" onclick="EP.moveJob(\'' + t.id + '\', 1)" title="Move down">&#9660;</button>' +
@@ -4985,18 +5145,20 @@
     renderGroup('col-review', sortedReview, "Nothing waiting on Ryan right now.");
 
     // Ryan Review and Job Submitted both hold a mix of job types, so the
-    // whole top row — column labels and which columns even show — follows
-    // whichever job is most relevant right now: the one currently open,
-    // or otherwise whichever is at the top of the list.
+    // whole top row — column labels and which columns even show — always
+    // strictly follows whichever job is actually first in the rendered
+    // list, full stop. (Previously this deferred to whichever job was
+    // expanded, if any, but that could make the header disagree with
+    // what's visibly on top — this is simpler and matches what's seen.)
     function updateMixedTableHeader(prefix, sortedList){
       var dueLabel = document.getElementById(prefix + '-due-label');
       var estdueLabel = document.getElementById(prefix + '-estdue-label');
       var panel = document.querySelector('.group-panel[data-cat="' + prefix + '"]');
       if (!dueLabel || !estdueLabel) return;
-      var focusJob = sortedList.find(function(t){ return expanded[t.id]; }) || sortedList[0];
+      var focusJob = sortedList[0];
       var jt = focusJob ? focusJob.jobType : '';
       if (jt === 'residential'){
-        dueLabel.textContent = 'Arrival';
+        dueLabel.textContent = 'Estimate Time / Date';
       } else if (jt === 'commercial'){
         dueLabel.textContent = 'Bid Due / Time';
       } else {
@@ -5007,7 +5169,9 @@
     }
     updateMixedTableHeader('review', sortedReview);
 
-    var sortedSentComplete = sortTasks(byCat.sentComplete, tableSortMode.sentComplete);
+    var sortedSentComplete = tableSortMode.sentComplete === 'importance'
+      ? byCat.sentComplete.slice().sort(function(a, b){ return mostRecentSubmissionAt(b) - mostRecentSubmissionAt(a); })
+      : sortTasks(byCat.sentComplete, tableSortMode.sentComplete);
     renderGroup('col-sentComplete', sortedSentComplete, "Nothing submitted yet.");
     updateMixedTableHeader('sentComplete', sortedSentComplete);
 
@@ -5080,6 +5244,7 @@
     notesExec: notesExec,
     notesToggleVoice: notesToggleVoice,
     voiceLogToggle: voiceLogToggle,
+    stopFreeformDictation: stopFreeformDictation,
     talkAddJob: talkAddJob,
     cancelWizard: cancelWizard,
     reloadForUpdate: reloadForUpdate,
