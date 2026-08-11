@@ -537,7 +537,6 @@
     body.tv-mode .job-row{ font-size: 13px; padding: 12px 12px; }
     body.tv-mode .job-task-name{ font-size: 14px; }
     body.tv-mode h1{ font-size: 21px; }
-    body.tv-mode .page-heading-logo-img{ height: 36px; }
     .board.column-mode .group-panel{ flex-basis: 100% !important; }
     .mobile-scroll-hint{
       display: block;
@@ -1680,10 +1679,15 @@
   body.tv-mode .page-heading{
     margin-bottom: 0;
     min-height: 0;
+    flex-wrap: nowrap;
+  }
+  body.tv-mode .page-heading-logo-img{
+    height: 30px !important;
   }
   body.tv-mode .header-controls-row{
     justify-content: flex-end;
-    width: 100%;
+    flex-wrap: nowrap;
+    flex: 1 1 auto;
   }
   body.tv-mode .view-mode-select{
     font-size: 12px;
@@ -1709,7 +1713,6 @@
   body.tv-mode .due-flag{ font-size: calc(14px * var(--tv-scale)); }
   body.tv-mode h1{ font-size: calc(30px * var(--tv-scale)); }
   body.tv-mode .overall-head span, body.tv-mode .overall-head b{ font-size: calc(15px * var(--tv-scale)); }
-  body.tv-mode .page-heading-logo-img{ height: calc(56px * var(--tv-scale)); }
 
   /* ---------- Column View mode ----------
      Puts Residential, Commercial, and Ryan Review side by side instead of
