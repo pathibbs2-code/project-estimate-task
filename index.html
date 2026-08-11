@@ -160,6 +160,7 @@
     letter-spacing: .02em;
   }
   .header-actions{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: none; }
+  .header-controls-row{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .header-minimize-btn:hover{ background: var(--blue-soft); color: var(--blue); }
   .page-heading-text h1{
     font-family: 'Archivo', sans-serif;
@@ -1660,8 +1661,30 @@
   body.tv-mode .job-move-buttons,
   body.tv-mode .job-name-icons,
   body.tv-mode .mobile-scroll-hint,
-  body.tv-mode .category-subtext{
+  body.tv-mode .category-subtext,
+  body.tv-mode .page-heading-text,
+  body.tv-mode .page-heading-logo-img,
+  body.tv-mode .overall-wrap{
     display: none !important;
+  }
+  /* The view mode selector is the one thing in the header that's NEVER
+     hidden here — it's the only way back to Desktop View, so it stays,
+     just shrunk down and tucked out of the way in the corner. */
+  body.tv-mode .app-header{
+    padding: 8px 14px;
+    margin-bottom: 8px;
+  }
+  body.tv-mode .page-heading{
+    margin-bottom: 0;
+    min-height: 0;
+  }
+  body.tv-mode .header-controls-row{
+    justify-content: flex-end;
+    width: 100%;
+  }
+  body.tv-mode .view-mode-select{
+    font-size: 12px;
+    padding: 5px 22px 5px 12px;
   }
   /* --tv-scale is recalculated live by JS (fitTvDisplay) so the whole
      board grows or shrinks to fill the screen exactly, with no scrolling,
@@ -1776,16 +1799,18 @@
         <div class="category-subtext">MEASURE &middot; TAKEOFF &middot; ESTIMATE &middot; RESIDENTIAL &middot; COMMERCIAL</div>
       </div>
       <img class="page-heading-logo-img" alt="Sutton Flooring" src="data:image/png;base64,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">
-      <div class="header-actions">
-        <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
-        <button type="button" class="header-minimize-btn talk-add-job-btn" onclick="EP.talkAddJob()" title="Talk a new job in">🎙️ Talk Add Job</button>
-      </div>
-      <div class="view-mode-wrap">
-        <select id="view-mode-select" class="view-mode-select" onchange="EP.setViewMode(this.value)">
-          <option value="desktop">Desktop View</option>
-          <option value="stack">Stack View</option>
-          <option value="sidebyside">Side By Side View</option>
-        </select>
+      <div class="header-controls-row">
+        <div class="view-mode-wrap">
+          <select id="view-mode-select" class="view-mode-select" onchange="EP.setViewMode(this.value)">
+            <option value="desktop">Desktop View</option>
+            <option value="stack">Stack View</option>
+            <option value="sidebyside">Side By Side View</option>
+          </select>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
+          <button type="button" class="header-minimize-btn talk-add-job-btn" onclick="EP.talkAddJob()" title="Talk a new job in">🎙️ Talk Add Job</button>
+        </div>
       </div>
     </div>
 
