@@ -1663,20 +1663,26 @@
   body.tv-mode .category-subtext{
     display: none !important;
   }
-  body.tv-mode .job-table-head{ font-size: 15px; padding: 14px 18px; }
-  body.tv-mode .job-row{ font-size: 17px; padding: 18px 18px; }
-  body.tv-mode .job-task-name{ font-size: 19px; }
-  body.tv-mode .job-task-sub{ font-size: 14px; }
+  /* --tv-scale is recalculated live by JS (fitTvDisplay) so the whole
+     board grows or shrinks to fill the screen exactly, with no scrolling,
+     no matter how many jobs are currently on the board. 1 = the base
+     sizes below, calibrated for a 1920x1080 screen; JS adjusts it up or
+     down from there. */
+  :root{ --tv-scale: 1; }
+  body.tv-mode .job-table-head{ font-size: calc(15px * var(--tv-scale)); padding: calc(14px * var(--tv-scale)) calc(18px * var(--tv-scale)); }
+  body.tv-mode .job-row{ font-size: calc(17px * var(--tv-scale)); padding: calc(18px * var(--tv-scale)) calc(18px * var(--tv-scale)); }
+  body.tv-mode .job-task-name{ font-size: calc(19px * var(--tv-scale)); }
+  body.tv-mode .job-task-sub{ font-size: calc(14px * var(--tv-scale)); }
   body.tv-mode .row-quick-select,
   body.tv-mode .add-datetime-btn,
-  body.tv-mode .voice-log-btn{ font-size: 14px; padding: 8px 14px; }
-  body.tv-mode .owner-avatar{ width: 36px; height: 36px; font-size: 15px; }
-  body.tv-mode .group-title{ font-size: 20px; }
-  body.tv-mode .badge-count{ font-size: 16px; }
-  body.tv-mode .due-flag{ font-size: 14px; }
-  body.tv-mode h1{ font-size: 30px; }
-  body.tv-mode .overall-head span, body.tv-mode .overall-head b{ font-size: 15px; }
-  body.tv-mode .page-heading-logo-img{ height: 56px; }
+  body.tv-mode .voice-log-btn{ font-size: calc(14px * var(--tv-scale)); padding: calc(8px * var(--tv-scale)) calc(14px * var(--tv-scale)); }
+  body.tv-mode .owner-avatar{ width: calc(36px * var(--tv-scale)); height: calc(36px * var(--tv-scale)); font-size: calc(15px * var(--tv-scale)); }
+  body.tv-mode .group-title{ font-size: calc(20px * var(--tv-scale)); }
+  body.tv-mode .badge-count{ font-size: calc(16px * var(--tv-scale)); }
+  body.tv-mode .due-flag{ font-size: calc(14px * var(--tv-scale)); }
+  body.tv-mode h1{ font-size: calc(30px * var(--tv-scale)); }
+  body.tv-mode .overall-head span, body.tv-mode .overall-head b{ font-size: calc(15px * var(--tv-scale)); }
+  body.tv-mode .page-heading-logo-img{ height: calc(56px * var(--tv-scale)); }
 
   /* ---------- Column View mode ----------
      Puts Residential, Commercial, and Ryan Review side by side instead of
@@ -4244,6 +4250,11 @@
     try{ localStorage.setItem('estimatePipelineViewMode', mode); } catch(e){ /* private browsing, etc — just skip persisting */ }
     var sel = document.getElementById('view-mode-select');
     if (sel) sel.value = mode;
+    if (mode === 'desktop'){
+      document.documentElement.style.setProperty('--tv-scale', '1');
+    } else {
+      scheduleTvFit();
+    }
   }
 
   function restoreViewMode(){
@@ -4251,6 +4262,49 @@
     try{ saved = localStorage.getItem('estimatePipelineViewMode'); } catch(e){ /* ignore */ }
     setViewMode(saved || 'desktop');
   }
+
+  // ---------- TV auto-fit ----------
+  // Recalculates how big everything can be while still fitting the whole
+  // board on screen with no scrolling — calibrated for a 1920x1080
+  // display, but driven by the actual window size so it holds up at
+  // other resolutions too. Job Submitted stays collapsed in these modes
+  // and its job count never factors in — only what's actually visible
+  // (Residential, Commercial, Ryan Review, plus Job Submitted's own
+  // small collapsed header bar) counts toward the fit.
+  var tvFitPending = false;
+
+  function scheduleTvFit(){
+    if (tvFitPending) return;
+    tvFitPending = true;
+    requestAnimationFrame(function(){
+      tvFitPending = false;
+      fitTvDisplay();
+    });
+  }
+
+  function fitTvDisplay(){
+    if (!document.body.classList.contains('tv-mode')) return;
+    var board = document.getElementById('board');
+    var header = document.querySelector('.app-header');
+    if (!board || !header) return;
+    // Measure at natural (1x) scale first so the math reflects real
+    // content, not whatever scale happened to be set before.
+    document.documentElement.style.setProperty('--tv-scale', '1');
+    requestAnimationFrame(function(){
+      var headerHeight = header.getBoundingClientRect().height;
+      var appVerticalPadding = 80; // matches .app's top+bottom padding
+      var availableHeight = window.innerHeight - headerHeight - appVerticalPadding;
+      var neededHeight = board.scrollHeight;
+      if (neededHeight <= 0 || availableHeight <= 0) return;
+      var scale = availableHeight / neededHeight;
+      scale = Math.max(0.55, Math.min(scale, 1.6)); // never microscopic, never absurd
+      document.documentElement.style.setProperty('--tv-scale', scale.toFixed(3));
+    });
+  }
+
+  window.addEventListener('resize', function(){
+    if (document.body.classList.contains('tv-mode')) scheduleTvFit();
+  });
 
   function talkAddJob(jobType){
     console.log('[wizard] talkAddJob started, presetType:', jobType || '(none)');
@@ -5422,6 +5476,8 @@
     document.getElementById('completed-fill').style.width = completedPct + '%';
     document.getElementById('completed-label').textContent =
       completedCount + (completedCount === 1 ? ' job submitted' : ' jobs submitted');
+
+    if (document.body.classList.contains('tv-mode')) scheduleTvFit();
   }
 
   // Expose the small API used by inline handlers
