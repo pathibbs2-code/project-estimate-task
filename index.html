@@ -538,7 +538,7 @@
     body.tv-mode .job-task-name{ font-size: 14px; }
     body.tv-mode h1{ font-size: 21px; }
     body.tv-mode .page-heading-logo-img{ height: 36px; }
-    .board.column-mode .group-panel{ flex-basis: 100%; }
+    .board.column-mode .group-panel{ flex-basis: 100% !important; }
     .mobile-scroll-hint{
       display: block;
       font-size: 10.5px;
@@ -852,6 +852,11 @@
     flex-shrink: 0;
   }
   .job-icon-btn:hover{ background: var(--medium-soft); border-color: var(--medium); }
+  .job-icon-btn.has-content{
+    border: 2px solid #39FF14;
+    box-shadow: 0 0 5px rgba(57, 255, 20, 0.6);
+  }
+  .job-icon-btn.has-content:hover{ background: #fff; }
   .job-icon-plus{
     position: absolute; bottom: -4px; right: -4px;
     width: 13px; height: 13px;
@@ -1659,11 +1664,9 @@
   body.tv-mode .table-sort-select,
   body.tv-mode .job-table-addrow,
   body.tv-mode .job-move-buttons,
-  body.tv-mode .job-name-icons,
   body.tv-mode .mobile-scroll-hint,
   body.tv-mode .category-subtext,
   body.tv-mode .page-heading-text,
-  body.tv-mode .page-heading-logo-img,
   body.tv-mode .overall-wrap{
     display: none !important;
   }
@@ -1700,6 +1703,7 @@
   body.tv-mode .add-datetime-btn,
   body.tv-mode .voice-log-btn{ font-size: calc(14px * var(--tv-scale)); padding: calc(8px * var(--tv-scale)) calc(14px * var(--tv-scale)); }
   body.tv-mode .owner-avatar{ width: calc(36px * var(--tv-scale)); height: calc(36px * var(--tv-scale)); font-size: calc(15px * var(--tv-scale)); }
+  body.tv-mode .job-icon-btn{ width: calc(27px * var(--tv-scale)); height: calc(27px * var(--tv-scale)); font-size: calc(13px * var(--tv-scale)); }
   body.tv-mode .group-title{ font-size: calc(20px * var(--tv-scale)); }
   body.tv-mode .badge-count{ font-size: calc(16px * var(--tv-scale)); }
   body.tv-mode .due-flag{ font-size: calc(14px * var(--tv-scale)); }
@@ -1721,10 +1725,19 @@
     flex-direction: row;
     flex-wrap: wrap;
     align-items: flex-start;
+    /* These are the same --col-* variables the tables already build their
+       grid-template-columns from — overriding them here, at the narrower
+       column-mode scope, is what actually makes Priority and the due-date
+       columns fit inside a third-of-the-screen panel instead of getting
+       scrolled out of view like before. */
+    --col-name: 240px;
+    --col-priority: 88px;
+    --col-due: 140px;
+    --col-estdue: 105px;
   }
   .board.column-mode .group-panel{
     flex: 1 1 0;
-    min-width: 360px;
+    min-width: 600px;
   }
   .board.column-mode .group-panel[data-cat="sentComplete"]{
     flex: 1 1 100%;
@@ -1785,6 +1798,8 @@
   .board.column-mode .group-panel[data-cat="review"] .job-row-wrap{
     min-width: 0;
   }
+  body.tv-mode .jc-task{ gap: 12px; padding-left: 4px; }
+  body.tv-mode .job-task-text{ padding-right: 8px; }
 </style>
 </head>
 <body>
@@ -5316,10 +5331,10 @@
     var nameIconsHtml =
       '<span class="job-name-icons" onclick="event.stopPropagation()">' +
         '<span class="job-name-divider"></span>' +
-        '<button type="button" class="job-icon-btn" title="' + (fileCount ? fileCount + ' file' + (fileCount === 1 ? '' : 's') : 'Add files') + '" onclick="EP.openFilesManager(\'' + t.id + '\')">📁<span class="job-icon-plus">+</span>' +
+        '<button type="button" class="job-icon-btn' + (fileCount ? ' has-content' : '') + '" title="' + (fileCount ? fileCount + ' file' + (fileCount === 1 ? '' : 's') + ' — click to view' : 'Add files') + '" onclick="EP.openFilesManager(\'' + t.id + '\')">📁<span class="job-icon-plus">+</span>' +
           (fileCount ? '<span class="job-icon-count">' + fileCount + '</span>' : '') +
         '</button>' +
-        '<button type="button" class="job-icon-btn" title="' + (noteCount ? 'Notes' : 'Add notes') + '" onclick="EP.openNotesEditor(\'' + t.id + '\')">✏️<span class="job-icon-plus">+</span>' +
+        '<button type="button" class="job-icon-btn' + (noteCount ? ' has-content' : '') + '" title="' + (noteCount ? 'Notes — click to view' : 'Add notes') + '" onclick="EP.openNotesEditor(\'' + t.id + '\')">✏️<span class="job-icon-plus">+</span>' +
           (noteCount ? '<span class="job-icon-count">&#8226;</span>' : '') +
         '</button>' +
       '</span>';
