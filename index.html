@@ -1733,10 +1733,9 @@
        column-mode scope, is what actually makes Priority and the due-date
        columns fit inside a third-of-the-screen panel instead of getting
        scrolled out of view like before. */
-    --col-name: 240px;
-    --col-priority: 88px;
-    --col-due: 140px;
-    --col-estdue: 105px;
+    --col-priority: 100px;
+    --col-due: 145px;
+    --col-estdue: 115px;
   }
   .board.column-mode .group-panel{
     flex: 1 1 0;
@@ -1759,7 +1758,7 @@
   }
   .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
   .board.column-mode .group-panel[data-cat="residential"] .job-row{
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue);
+    grid-template-columns: minmax(180px, 1fr) var(--col-priority) var(--col-due) var(--col-estdue);
   }
   .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
   .board.column-mode .group-panel[data-cat="residential"] .job-row,
@@ -1777,7 +1776,7 @@
   }
   .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
   .board.column-mode .group-panel[data-cat="commercial"] .job-row{
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due);
+    grid-template-columns: minmax(180px, 1fr) var(--col-priority) var(--col-due);
   }
   .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
   .board.column-mode .group-panel[data-cat="commercial"] .job-row,
@@ -1794,7 +1793,7 @@
   }
   .board.column-mode .group-panel[data-cat="review"] .job-table-head,
   .board.column-mode .group-panel[data-cat="review"] .job-row{
-    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue);
+    grid-template-columns: minmax(180px, 1fr) var(--col-priority) var(--col-due) var(--col-estdue);
   }
   .board.column-mode .group-panel[data-cat="review"] .job-table-head,
   .board.column-mode .group-panel[data-cat="review"] .job-row,
