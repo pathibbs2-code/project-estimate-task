@@ -1619,6 +1619,118 @@
     margin-left: -8px;
     border: 2px solid #fff;
   }
+
+  /* ---------- TV Display mode ----------
+     A passive, at-a-glance wall display has different needs than an
+     interactive phone screen: much larger text for viewing from across a
+     room, and none of the buttons/search/sort controls meant for editing.
+     Column layout itself is untouched — it already uses the full window
+     width by default, so nothing needs to be hidden to make room; this
+     just scales everything up and clears away anything you'd only need
+     if you were standing at the screen editing something. */
+  body.tv-mode .global-search-wrap,
+  body.tv-mode .header-actions,
+  body.tv-mode .table-sort-select,
+  body.tv-mode .job-table-addrow,
+  body.tv-mode .job-move-buttons,
+  body.tv-mode .job-name-icons,
+  body.tv-mode .mobile-scroll-hint,
+  body.tv-mode .category-subtext{
+    display: none !important;
+  }
+  body.tv-mode .job-table-head{ font-size: 15px; padding: 14px 18px; }
+  body.tv-mode .job-row{ font-size: 17px; padding: 18px 18px; }
+  body.tv-mode .job-task-name{ font-size: 19px; }
+  body.tv-mode .job-task-sub{ font-size: 14px; }
+  body.tv-mode .row-quick-select,
+  body.tv-mode .add-datetime-btn,
+  body.tv-mode .voice-log-btn{ font-size: 14px; padding: 8px 14px; }
+  body.tv-mode .owner-avatar{ width: 36px; height: 36px; font-size: 15px; }
+  body.tv-mode .group-title{ font-size: 20px; }
+  body.tv-mode .badge-count{ font-size: 16px; }
+  body.tv-mode .due-flag{ font-size: 14px; }
+  body.tv-mode h1{ font-size: 30px; }
+  body.tv-mode .overall-head span, body.tv-mode .overall-head b{ font-size: 15px; }
+  body.tv-mode .page-heading-logo-img{ height: 56px; }
+
+  /* ---------- Column View mode ----------
+     Puts Residential, Commercial, and Ryan Review side by side instead of
+     stacked, so all the jobs actively moving through the pipeline are
+     visible at once. Each column keeps its own independent horizontal
+     scroll for the columns that don't fit its narrower width (same
+     swipe-to-scroll behavior already used on mobile, just applied at any
+     width now). Job Submitted doesn't belong in that side-by-side
+     comparison — jobs land there once they're done, not "in progress" —
+     so it drops to its own full-width row underneath and stays collapsed
+     by default. */
+  .board.column-mode{
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .board.column-mode .group-panel{
+    flex: 1 1 0;
+    min-width: 360px;
+  }
+  .board.column-mode .group-panel[data-cat="sentComplete"]{
+    flex: 1 1 100%;
+  }
+
+  /* Side-by-side columns only need the essentials to scan at a glance:
+     Job, Priority, and whichever due-date column(s) actually apply to
+     that table. Everything else (Quote, Manual, Takeoff, Rep Price, Sent
+     To, Updated) is still there the moment you switch back to stacked
+     view — nothing is deleted, just hidden for this denser layout. */
+  .board.column-mode .group-panel[data-cat="residential"] .jc-quote,
+  .board.column-mode .group-panel[data-cat="residential"] .jc-manual,
+  .board.column-mode .group-panel[data-cat="residential"] .jc-sentto,
+  .board.column-mode .group-panel[data-cat="residential"] .jc-updated{
+    display: none;
+  }
+  .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
+  .board.column-mode .group-panel[data-cat="residential"] .job-row{
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue);
+  }
+  .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
+  .board.column-mode .group-panel[data-cat="residential"] .job-row,
+  .board.column-mode .group-panel[data-cat="residential"] .job-row-wrap{
+    min-width: 0;
+  }
+
+  .board.column-mode .group-panel[data-cat="commercial"] .jc-takeoff,
+  .board.column-mode .group-panel[data-cat="commercial"] .jc-contactreps,
+  .board.column-mode .group-panel[data-cat="commercial"] .jc-quote,
+  .board.column-mode .group-panel[data-cat="commercial"] .jc-manual,
+  .board.column-mode .group-panel[data-cat="commercial"] .jc-sentto,
+  .board.column-mode .group-panel[data-cat="commercial"] .jc-updated{
+    display: none;
+  }
+  .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
+  .board.column-mode .group-panel[data-cat="commercial"] .job-row{
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due);
+  }
+  .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
+  .board.column-mode .group-panel[data-cat="commercial"] .job-row,
+  .board.column-mode .group-panel[data-cat="commercial"] .job-row-wrap{
+    min-width: 0;
+  }
+
+  .board.column-mode .group-panel[data-cat="review"] .jc-takeoff,
+  .board.column-mode .group-panel[data-cat="review"] .jc-quote,
+  .board.column-mode .group-panel[data-cat="review"] .jc-manual,
+  .board.column-mode .group-panel[data-cat="review"] .jc-sentto,
+  .board.column-mode .group-panel[data-cat="review"] .jc-updated{
+    display: none;
+  }
+  .board.column-mode .group-panel[data-cat="review"] .job-table-head,
+  .board.column-mode .group-panel[data-cat="review"] .job-row{
+    grid-template-columns: var(--col-name) var(--col-priority) var(--col-due) var(--col-estdue);
+  }
+  .board.column-mode .group-panel[data-cat="review"] .job-table-head,
+  .board.column-mode .group-panel[data-cat="review"] .job-row,
+  .board.column-mode .group-panel[data-cat="review"] .job-row-wrap{
+    min-width: 0;
+  }
 </style>
 </head>
 <body>
@@ -1636,6 +1748,8 @@
       <div class="header-actions">
         <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
         <button type="button" class="header-minimize-btn talk-add-job-btn" onclick="EP.talkAddJob()" title="Talk a new job in">🎙️ Talk Add Job</button>
+        <button type="button" class="header-minimize-btn" id="tv-mode-btn" onclick="EP.toggleTvMode()" title="Big-screen display mode">📺 TV Display</button>
+        <button type="button" class="header-minimize-btn" id="column-mode-btn" onclick="EP.toggleColumnMode()" title="See tables side by side">🗂 Column View</button>
       </div>
     </div>
 
@@ -3040,6 +3154,8 @@
   }
 
   function load(){
+    restoreTvMode();
+    restoreColumnMode();
     startVersionChecking();
     if (!window.storage){
       loaded = true;
@@ -3717,6 +3833,7 @@
   var wizardListening = false;
   var wizardFreeformRecognition = null;
   var wizardFreeformParts = [];
+  var wizardFreeformActive = false;
   var wizardVoicesWarmed = false;
 
   // Some mobile browsers need getVoices() called (and the voiceschanged
@@ -3849,6 +3966,16 @@
   // listening through natural pauses, "um"s, and thinking gaps instead of
   // cutting off. Ends when the person says "send" or taps Done Talking;
   // if the browser's own silence timeout ends it first, that's fine too.
+  // Mobile browsers (Android Chrome especially) are well known to be
+  // unreliable with continuous:true speech recognition — it can silently
+  // end almost instantly without ever capturing anything, with no error
+  // to explain why. This uses a chain of short, single-utterance sessions
+  // instead, automatically restarting after each one, which is a far more
+  // dependable pattern across devices while still feeling like one
+  // continuous listen from the person's side. Every recognized phrase is
+  // echoed straight into the visible log in real time — on the phone
+  // itself, not just devtools — so it's obvious the mic is actually
+  // working as you talk.
   function captureFreeformJobDictation(){
     var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec){
@@ -3857,45 +3984,77 @@
       return;
     }
     wizardFreeformParts = [];
+    wizardFreeformActive = true;
     updateWizardLive('');
+    showWizardDoneButton();
+    updateWizardStatus('🎙️ Listening — take your time…');
+    runFreeformListenLoop();
+  }
+
+  function runFreeformListenLoop(){
+    if (!wizardFreeformActive) return;
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     wizardFreeformRecognition = new SpeechRec();
-    wizardFreeformRecognition.continuous = true;
+    wizardFreeformRecognition.continuous = false;
     wizardFreeformRecognition.interimResults = true;
     wizardFreeformRecognition.lang = 'en-US';
-    wizardFreeformRecognition.onstart = function(){
-      wizardListening = true;
-      updateWizardStatus('🎙️ Listening — take your time…');
-      showWizardDoneButton();
-    };
+    wizardListening = true;
+
     wizardFreeformRecognition.onresult = function(e){
       var interim = '';
       var stopNow = false;
-      for (var i = e.resultIndex; i < e.results.length; i++){
+      for (var i = 0; i < e.results.length; i++){
         var chunk = e.results[i][0].transcript;
         if (e.results[i].isFinal){
           var cleaned = stripFillerWords(chunk.trim());
-          if (cleaned) wizardFreeformParts.push(cleaned);
+          if (cleaned){
+            wizardFreeformParts.push(cleaned);
+            logWizard('answer', cleaned);
+            console.log('[wizard] heard:', cleaned);
+          }
           if (/\bsend\b/i.test(chunk)) stopNow = true;
         } else {
           interim = chunk;
         }
       }
-      updateWizardLive((wizardFreeformParts.join(' ') + ' ' + interim).trim());
-      if (stopNow) wizardFreeformRecognition.stop();
+      updateWizardLive(interim);
+      if (stopNow){
+        wizardFreeformActive = false;
+        try{ wizardFreeformRecognition.stop(); } catch(e){}
+      }
     };
-    wizardFreeformRecognition.onerror = function(){ wizardListening = false; };
+    wizardFreeformRecognition.onerror = function(e){
+      console.error('[wizard] recognition error:', e && e.error);
+      if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')){
+        wizardFreeformActive = false;
+        logWizard('system', '🎙️ Microphone access was blocked — check your browser/site permissions and try again.');
+        updateWizardStatus('Microphone blocked — check permissions.');
+      }
+      // Other errors (no-speech, network hiccups, aborted) are expected
+      // now and then — onend fires right after and the loop just
+      // restarts, so a single dropped moment never kills the whole thing.
+    };
     wizardFreeformRecognition.onend = function(){
       wizardListening = false;
-      hideWizardDoneButton();
-      updateWizardLive('');
-      finishFreeformDictation();
+      if (wizardFreeformActive){
+        setTimeout(runFreeformListenLoop, 250);
+      } else {
+        hideWizardDoneButton();
+        updateWizardLive('');
+        finishFreeformDictation();
+      }
     };
-    setTimeout(function(){
-      try{ wizardFreeformRecognition.start(); } catch(e){ finishFreeformDictation(); }
-    }, 400);
+    try{
+      wizardFreeformRecognition.start();
+    } catch(e){
+      console.error('[wizard] failed to start recognition:', e);
+      wizardFreeformActive = false;
+      finishFreeformDictation();
+    }
   }
 
   function stopFreeformDictation(){
+    wizardFreeformActive = false;
     if (wizardFreeformRecognition){ try{ wizardFreeformRecognition.stop(); } catch(e){} }
   }
 
@@ -3907,10 +4066,11 @@
       speak("Sorry, I didn't catch that. Please tell me about the job.", function(){ captureFreeformJobDictation(); });
       return;
     }
-    logWizard('answer', transcript);
+    console.log('[wizard] full transcript:', transcript);
     var extracted = extractFieldsFromTranscript(transcript, wizardTaskDraft.jobType);
+    console.log('[wizard] extracted fields:', extracted);
     var changes = applyExtractedToDraft(wizardTaskDraft, extracted);
-    if (changes.length) logWizard('system', 'Got it: ' + changes.join(' · '));
+    logWizard('system', changes.length ? ('Got it: ' + changes.join(' · ')) : "Didn't recognize any specific fields in that — you can add more when it asks to review, or edit the job afterward.");
     checkJobTypeThenReview();
   }
 
@@ -4036,7 +4196,55 @@
   // jobType passed in from a specific table's button skips the follow-up
   // question entirely (already unambiguous); the top-level button and
   // Ryan Review's pass nothing, so it's asked only if never mentioned.
+  // ---------- TV Display mode ----------
+  function applyTvModeButtonLabel(){
+    var btn = document.getElementById('tv-mode-btn');
+    if (!btn) return;
+    var on = document.body.classList.contains('tv-mode');
+    btn.textContent = on ? '📺 Exit TV Display' : '📺 TV Display';
+  }
+
+  function toggleTvMode(){
+    var on = document.body.classList.toggle('tv-mode');
+    try{ localStorage.setItem('estimatePipelineTvMode', on ? '1' : '0'); } catch(e){ /* private browsing, etc — just skip persisting */ }
+    applyTvModeButtonLabel();
+  }
+
+  function restoreTvMode(){
+    var saved = null;
+    try{ saved = localStorage.getItem('estimatePipelineTvMode'); } catch(e){ /* ignore */ }
+    if (saved === '1') document.body.classList.add('tv-mode');
+    applyTvModeButtonLabel();
+  }
+
+  // ---------- Column View mode ----------
+  function applyColumnModeButtonLabel(){
+    var btn = document.getElementById('column-mode-btn');
+    var board = document.getElementById('board');
+    if (!btn || !board) return;
+    var on = board.classList.contains('column-mode');
+    btn.textContent = on ? '🗂 Exit Column View' : '🗂 Column View';
+  }
+
+  function toggleColumnMode(){
+    var board = document.getElementById('board');
+    if (!board) return;
+    var on = board.classList.toggle('column-mode');
+    try{ localStorage.setItem('estimatePipelineColumnMode', on ? '1' : '0'); } catch(e){ /* private browsing, etc — just skip persisting */ }
+    if (on && !collapsedGroups.sentComplete) toggleGroup('sentComplete'); // clean starting layout — still expandable afterward
+    applyColumnModeButtonLabel();
+  }
+
+  function restoreColumnMode(){
+    var saved = null;
+    try{ saved = localStorage.getItem('estimatePipelineColumnMode'); } catch(e){ /* ignore */ }
+    var board = document.getElementById('board');
+    if (saved === '1' && board) board.classList.add('column-mode');
+    applyColumnModeButtonLabel();
+  }
+
   function talkAddJob(jobType){
+    console.log('[wizard] talkAddJob started, presetType:', jobType || '(none)');
     wizardTaskDraft = { jobType: jobType || '' };
     openWizardModal();
     var intro = jobType
@@ -5246,6 +5454,8 @@
     voiceLogToggle: voiceLogToggle,
     stopFreeformDictation: stopFreeformDictation,
     talkAddJob: talkAddJob,
+    toggleTvMode: toggleTvMode,
+    toggleColumnMode: toggleColumnMode,
     cancelWizard: cancelWizard,
     reloadForUpdate: reloadForUpdate,
     dismissUpdateBanner: dismissUpdateBanner,
