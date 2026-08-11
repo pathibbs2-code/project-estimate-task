@@ -524,6 +524,20 @@
       --font-table-row: 11.5px;
     }
     .job-table-scroll{ position: relative; }
+    .view-mode-wrap{ width: 100%; }
+    .view-mode-select{ width: 100%; text-align: center; text-align-last: center; }
+
+    /* Stack/Side By Side still work on mobile, but TV-sized text would be
+       absurd on a phone — this scales the same modes down to something
+       just modestly larger than normal, and Side By Side simply can't
+       fit more than one narrow column at a time, so it stacks them full
+       width instead of squeezing multiple tight columns in. */
+    body.tv-mode .job-table-head{ font-size: 12px; padding: 10px 12px; }
+    body.tv-mode .job-row{ font-size: 13px; padding: 12px 12px; }
+    body.tv-mode .job-task-name{ font-size: 14px; }
+    body.tv-mode h1{ font-size: 21px; }
+    body.tv-mode .page-heading-logo-img{ height: 36px; }
+    .board.column-mode .group-panel{ flex-basis: 100%; }
     .mobile-scroll-hint{
       display: block;
       font-size: 10.5px;
@@ -609,6 +623,17 @@
     border: 1px solid var(--line);
     background: #fff;
     color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .view-mode-wrap{ flex: none; }
+  .view-mode-select{
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px; font-weight: 700;
+    padding: 8px 26px 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--medium);
+    background: var(--medium-soft);
+    color: var(--medium);
     cursor: pointer;
   }
   .global-search-wrap{
@@ -1748,8 +1773,13 @@
       <div class="header-actions">
         <button type="button" class="header-minimize-btn" onclick="EP.openAddJobModal()" title="Add a job">+ Add Job</button>
         <button type="button" class="header-minimize-btn talk-add-job-btn" onclick="EP.talkAddJob()" title="Talk a new job in">🎙️ Talk Add Job</button>
-        <button type="button" class="header-minimize-btn" id="tv-mode-btn" onclick="EP.toggleTvMode()" title="Big-screen display mode">📺 TV Display</button>
-        <button type="button" class="header-minimize-btn" id="column-mode-btn" onclick="EP.toggleColumnMode()" title="See tables side by side">🗂 Column View</button>
+      </div>
+      <div class="view-mode-wrap">
+        <select id="view-mode-select" class="view-mode-select" onchange="EP.setViewMode(this.value)">
+          <option value="desktop">Desktop View</option>
+          <option value="stack">Stack View</option>
+          <option value="sidebyside">Side By Side View</option>
+        </select>
       </div>
     </div>
 
@@ -3154,8 +3184,7 @@
   }
 
   function load(){
-    restoreTvMode();
-    restoreColumnMode();
+    restoreViewMode();
     startVersionChecking();
     if (!window.storage){
       loaded = true;
@@ -4197,50 +4226,30 @@
   // question entirely (already unambiguous); the top-level button and
   // Ryan Review's pass nothing, so it's asked only if never mentioned.
   // ---------- TV Display mode ----------
-  function applyTvModeButtonLabel(){
-    var btn = document.getElementById('tv-mode-btn');
-    if (!btn) return;
-    var on = document.body.classList.contains('tv-mode');
-    btn.textContent = on ? '📺 Exit TV Display' : '📺 TV Display';
+  // ---------- View mode: Desktop / Stack / Side By Side ----------
+  // Desktop is the original layout — normal size, every column, every
+  // button. Stack and Side By Side both apply the same big-screen
+  // formatting (larger text, editing controls hidden) meant for a TV or
+  // wall display; they only differ in whether the tables stack vertically
+  // or sit side by side. Because this is one selector with one saved
+  // value — not two independent toggles — there's no combination that can
+  // get stuck with no way back; the selector itself is never hidden by
+  // any mode, so switching back is always just one tap away.
+  function setViewMode(mode){
+    if (mode !== 'stack' && mode !== 'sidebyside') mode = 'desktop';
+    document.body.classList.toggle('tv-mode', mode === 'stack' || mode === 'sidebyside');
+    var board = document.getElementById('board');
+    if (board) board.classList.toggle('column-mode', mode === 'sidebyside');
+    if (mode === 'sidebyside' && !collapsedGroups.sentComplete) toggleGroup('sentComplete'); // clean starting layout — still expandable afterward
+    try{ localStorage.setItem('estimatePipelineViewMode', mode); } catch(e){ /* private browsing, etc — just skip persisting */ }
+    var sel = document.getElementById('view-mode-select');
+    if (sel) sel.value = mode;
   }
 
-  function toggleTvMode(){
-    var on = document.body.classList.toggle('tv-mode');
-    try{ localStorage.setItem('estimatePipelineTvMode', on ? '1' : '0'); } catch(e){ /* private browsing, etc — just skip persisting */ }
-    applyTvModeButtonLabel();
-  }
-
-  function restoreTvMode(){
+  function restoreViewMode(){
     var saved = null;
-    try{ saved = localStorage.getItem('estimatePipelineTvMode'); } catch(e){ /* ignore */ }
-    if (saved === '1') document.body.classList.add('tv-mode');
-    applyTvModeButtonLabel();
-  }
-
-  // ---------- Column View mode ----------
-  function applyColumnModeButtonLabel(){
-    var btn = document.getElementById('column-mode-btn');
-    var board = document.getElementById('board');
-    if (!btn || !board) return;
-    var on = board.classList.contains('column-mode');
-    btn.textContent = on ? '🗂 Exit Column View' : '🗂 Column View';
-  }
-
-  function toggleColumnMode(){
-    var board = document.getElementById('board');
-    if (!board) return;
-    var on = board.classList.toggle('column-mode');
-    try{ localStorage.setItem('estimatePipelineColumnMode', on ? '1' : '0'); } catch(e){ /* private browsing, etc — just skip persisting */ }
-    if (on && !collapsedGroups.sentComplete) toggleGroup('sentComplete'); // clean starting layout — still expandable afterward
-    applyColumnModeButtonLabel();
-  }
-
-  function restoreColumnMode(){
-    var saved = null;
-    try{ saved = localStorage.getItem('estimatePipelineColumnMode'); } catch(e){ /* ignore */ }
-    var board = document.getElementById('board');
-    if (saved === '1' && board) board.classList.add('column-mode');
-    applyColumnModeButtonLabel();
+    try{ saved = localStorage.getItem('estimatePipelineViewMode'); } catch(e){ /* ignore */ }
+    setViewMode(saved || 'desktop');
   }
 
   function talkAddJob(jobType){
@@ -5454,8 +5463,7 @@
     voiceLogToggle: voiceLogToggle,
     stopFreeformDictation: stopFreeformDictation,
     talkAddJob: talkAddJob,
-    toggleTvMode: toggleTvMode,
-    toggleColumnMode: toggleColumnMode,
+    setViewMode: setViewMode,
     cancelWizard: cancelWizard,
     reloadForUpdate: reloadForUpdate,
     dismissUpdateBanner: dismissUpdateBanner,
