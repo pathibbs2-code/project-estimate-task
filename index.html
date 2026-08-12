@@ -3236,6 +3236,13 @@
     fetchLiveVersionHashWithFallback().then(function(h){
       console.log('[version-check] live hash:', h, '| baseline:', currentVersionHash, '| changed:', h !== currentVersionHash);
       if (h !== currentVersionHash){
+        if (document.body.classList.contains('tv-mode')){
+          // A passive TV display has nobody standing there to click a
+          // banner — reload immediately instead of waiting on input.
+          console.log('[version-check] TV mode — reloading automatically');
+          location.reload();
+          return;
+        }
         var el = document.getElementById('update-banner');
         if (el) el.classList.add('open');
       }
@@ -4385,7 +4392,7 @@
     var naturalHeight = board.scrollHeight / currentScale;
     if (naturalHeight <= 0 || availableHeight <= 0) return;
     var scale = availableHeight / naturalHeight;
-    scale = Math.max(0.55, Math.min(scale, 1.6)); // never microscopic, never absurd
+    scale = Math.max(0.55, Math.min(scale, 3.2)); // never microscopic, but allowed to get genuinely large when there's only a few jobs to show
     if (Math.abs(scale - currentScale) < 0.02) return; // near-identical — skip to avoid pointless repaints
     document.documentElement.style.setProperty('--tv-scale', scale.toFixed(3));
   }
