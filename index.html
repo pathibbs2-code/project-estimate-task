@@ -1704,6 +1704,16 @@
   body.tv-mode .job-row{ font-size: calc(17px * var(--tv-scale)); padding: calc(8px * var(--tv-scale)) calc(18px * var(--tv-scale)); }
   body.tv-mode .job-task-name{ font-size: calc(19px * var(--tv-scale)); }
   body.tv-mode .job-task-sub{ font-size: calc(14px * var(--tv-scale)); }
+  body.tv-mode .jc-task,
+  body.tv-mode .job-task-text,
+  body.tv-mode .job-task-name-row{
+    white-space: normal;
+  }
+  body.tv-mode .job-task-name{
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
   body.tv-mode .row-quick-select,
   body.tv-mode .add-datetime-btn,
   body.tv-mode .voice-log-btn{ font-size: calc(14px * var(--tv-scale)); padding: calc(8px * var(--tv-scale)) calc(14px * var(--tv-scale)); }
