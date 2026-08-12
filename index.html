@@ -796,6 +796,7 @@
     text-align: center;
   }
   .jc-priority{ overflow: visible; }
+  .jc-task{ overflow: visible; }
   /* Ryan Review / Job Submitted hold a mix of job types — when the job
      currently on top doesn't use a Takeoff step (Residential), the whole
      column hides, both header and every row's cell, so the top row fully
@@ -3231,7 +3232,7 @@
 
   function startVersionChecking(){
     captureCurrentVersion();
-    setInterval(checkForNewVersion, 180000); // every 3 minutes
+    setInterval(checkForNewVersion, 15000); // every 15 seconds — catches a new deploy almost immediately
     document.addEventListener('visibilitychange', function(){
       if (document.visibilityState === 'visible') checkForNewVersion();
     });
@@ -4361,7 +4362,7 @@
     if (naturalHeight <= 0 || availableHeight <= 0) return;
     var scale = availableHeight / naturalHeight;
     scale = Math.max(0.55, Math.min(scale, 1.6)); // never microscopic, never absurd
-    if (Math.abs(scale - currentScale) < 0.01) return; // near-identical — skip to avoid pointless repaints
+    if (Math.abs(scale - currentScale) < 0.02) return; // near-identical — skip to avoid pointless repaints
     document.documentElement.style.setProperty('--tv-scale', scale.toFixed(3));
   }
 
@@ -4384,6 +4385,13 @@
   function fitColumnModeNames(){
     var board = document.getElementById('board');
     if (!board || !board.classList.contains('column-mode')) return;
+    var tvScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tv-scale')) || 1;
+    // Room the name cell needs beyond the text itself — avatar, chevron,
+    // divider, and the two Notes/Files icons — all of which scale with
+    // the board's current TV scale too. This has to be reserved FIRST;
+    // otherwise on a tight panel the text would shrink to zero and the
+    // icons would still get pushed past the cell's edge and clipped.
+    var nonTextOverhead = Math.round(150 * tvScale);
     ['residential', 'commercial', 'review'].forEach(function(cat){
       var panel = board.querySelector('.group-panel[data-cat="' + cat + '"]');
       if (!panel) return;
@@ -4395,7 +4403,7 @@
       var rowPadding = 36; // matches .job-row's left+right padding
       var gaps = gapCount * 10;
       var available = scrollEl.clientWidth - fixedColsWidth - rowPadding - gaps;
-      var nameWidth = Math.max(180, Math.floor(available));
+      var nameWidth = Math.max(120 + nonTextOverhead, Math.floor(available));
       panel.style.setProperty('--col-name-fit', nameWidth + 'px');
     });
   }
