@@ -1727,6 +1727,30 @@
   body.tv-mode h1{ font-size: calc(30px * var(--tv-scale)); }
   body.tv-mode .overall-head span, body.tv-mode .overall-head b{ font-size: calc(15px * var(--tv-scale)); }
 
+  /* Stack View only (TV mode without Side By Side) — one continuous
+     sheet, like a spreadsheet, instead of separate cards with gaps
+     between them. Each table's title bar stays, since that's what
+     labels which rows belong to which table; everything else about the
+     "card" look (rounded corners, shadow, margin) goes away so tables
+     flow directly into one another with zero space wasted between them. */
+  body.tv-mode .board:not(.column-mode){
+    gap: 0;
+  }
+  body.tv-mode .board:not(.column-mode) .group-panel{
+    border-radius: 0;
+    box-shadow: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  body.tv-mode .board:not(.column-mode) .group-panel + .group-panel{
+    border-top: 2px solid var(--ink-soft);
+  }
+  body.tv-mode .board:not(.column-mode) .group-header{
+    border-radius: 0;
+  }
+
   /* ---------- Column View mode ----------
      Puts Residential, Commercial, and Ryan Review in a masonry-style
      layout instead of stacked — but NOT forced into three equal-width
