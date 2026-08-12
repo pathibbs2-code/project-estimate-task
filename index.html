@@ -1770,24 +1770,21 @@
      browsers balance multi-column content by height while keeping DOM
      order, so a short table naturally stacks underneath another short
      one in the same column, and a tall table gets a column mostly to
-     itself. Each panel keeps its own independent horizontal scroll for
-     anything that doesn't fit (same swipe-to-scroll behavior already
-     used on mobile). Job Submitted doesn't belong in that comparison —
-     jobs land there once they're done, not "in progress" — so
-     column-span:all breaks it out to its own full-width row underneath,
-     and it stays collapsed by default. */
+     itself. Job Submitted doesn't belong in that comparison — jobs land
+     there once they're done, not "in progress" — so column-span:all
+     breaks it out to its own full-width row underneath, and it stays
+     collapsed by default.
+
+     Every table keeps its full, real column set here — Quote, Manual,
+     Takeoff, Rep Price, Sent To, Updated, all of it — sized exactly the
+     same as Desktop View. A narrower panel just means more of that gets
+     pushed past the visible edge, reachable by grabbing and scrolling
+     sideways within that panel — the exact same interaction Desktop
+     View already uses on a narrower window, nothing new to learn. */
   .board.column-mode{
     display: block;
     column-count: 2;
     column-gap: 16px;
-    /* These are the same --col-* variables the tables already build their
-       grid-template-columns from — overriding them here, at the narrower
-       column-mode scope, is what actually makes Priority and the due-date
-       columns fit inside a half-of-screen column instead of getting
-       scrolled out of view like before. */
-    --col-priority: 100px;
-    --col-due: 145px;
-    --col-estdue: 115px;
   }
   .board.column-mode .group-panel{
     break-inside: avoid;
@@ -1798,62 +1795,6 @@
   .board.column-mode .group-panel[data-cat="sentComplete"]{
     column-span: all;
     -webkit-column-span: all;
-  }
-
-  /* Side-by-side columns only need the essentials to scan at a glance:
-     Job, Priority, and whichever due-date column(s) actually apply to
-     that table. Everything else (Quote, Manual, Takeoff, Rep Price, Sent
-     To, Updated) is still there the moment you switch back to stacked
-     view — nothing is deleted, just hidden for this denser layout. */
-  .board.column-mode .group-panel[data-cat="residential"] .jc-quote,
-  .board.column-mode .group-panel[data-cat="residential"] .jc-manual,
-  .board.column-mode .group-panel[data-cat="residential"] .jc-sentto,
-  .board.column-mode .group-panel[data-cat="residential"] .jc-updated{
-    display: none;
-  }
-  .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
-  .board.column-mode .group-panel[data-cat="residential"] .job-row{
-    grid-template-columns: var(--col-name-fit, 220px) var(--col-priority) var(--col-due) var(--col-estdue);
-  }
-  .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
-  .board.column-mode .group-panel[data-cat="residential"] .job-row,
-  .board.column-mode .group-panel[data-cat="residential"] .job-row-wrap{
-    min-width: 0;
-  }
-
-  .board.column-mode .group-panel[data-cat="commercial"] .jc-takeoff,
-  .board.column-mode .group-panel[data-cat="commercial"] .jc-contactreps,
-  .board.column-mode .group-panel[data-cat="commercial"] .jc-quote,
-  .board.column-mode .group-panel[data-cat="commercial"] .jc-manual,
-  .board.column-mode .group-panel[data-cat="commercial"] .jc-sentto,
-  .board.column-mode .group-panel[data-cat="commercial"] .jc-updated{
-    display: none;
-  }
-  .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
-  .board.column-mode .group-panel[data-cat="commercial"] .job-row{
-    grid-template-columns: var(--col-name-fit, 220px) var(--col-priority) var(--col-due);
-  }
-  .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
-  .board.column-mode .group-panel[data-cat="commercial"] .job-row,
-  .board.column-mode .group-panel[data-cat="commercial"] .job-row-wrap{
-    min-width: 0;
-  }
-
-  .board.column-mode .group-panel[data-cat="review"] .jc-takeoff,
-  .board.column-mode .group-panel[data-cat="review"] .jc-quote,
-  .board.column-mode .group-panel[data-cat="review"] .jc-manual,
-  .board.column-mode .group-panel[data-cat="review"] .jc-sentto,
-  .board.column-mode .group-panel[data-cat="review"] .jc-updated{
-    display: none;
-  }
-  .board.column-mode .group-panel[data-cat="review"] .job-table-head,
-  .board.column-mode .group-panel[data-cat="review"] .job-row{
-    grid-template-columns: var(--col-name-fit, 220px) var(--col-priority) var(--col-due) var(--col-estdue);
-  }
-  .board.column-mode .group-panel[data-cat="review"] .job-table-head,
-  .board.column-mode .group-panel[data-cat="review"] .job-row,
-  .board.column-mode .group-panel[data-cat="review"] .job-row-wrap{
-    min-width: 0;
   }
   body.tv-mode .jc-task{ gap: 12px; padding-left: 4px; }
   body.tv-mode .job-task-text{ padding-right: 8px; }
@@ -4358,7 +4299,6 @@
       document.documentElement.style.setProperty('--tv-scale', '1');
     } else {
       scheduleTvFit();
-      if (mode === 'sidebyside') scheduleColumnModeFit();
     }
   }
 
@@ -4438,50 +4378,8 @@
   }
 
   window.addEventListener('resize', function(){
-    if (document.body.classList.contains('tv-mode')){
-      scheduleTvFit();
-      var board = document.getElementById('board');
-      if (board && board.classList.contains('column-mode')) scheduleColumnModeFit();
-    }
+    if (document.body.classList.contains('tv-mode')) scheduleTvFit();
   });
-
-  // ---------- Side By Side column-width fit ----------
-  // CSS grid's 1fr tracks can behave unpredictably once nested inside a
-  // scrollable flex column like these panels are — rather than trust that
-  // to stretch the name column to fill the real leftover space, this
-  // measures each panel directly and sets an exact pixel width, so there
-  // is no ambiguity for the browser to get wrong.
-  var COLUMN_MODE_FIXED_WIDTHS = { priority: 100, due: 145, estdue: 115 };
-
-  function fitColumnModeNames(){
-    var board = document.getElementById('board');
-    if (!board || !board.classList.contains('column-mode')) return;
-    var tvScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tv-scale')) || 1;
-    // Room the name cell needs beyond the text itself — avatar, chevron,
-    // divider, and the two Notes/Files icons — all of which scale with
-    // the board's current TV scale too. This has to be reserved FIRST;
-    // otherwise on a tight panel the text would shrink to zero and the
-    // icons would still get pushed past the cell's edge and clipped.
-    var nonTextOverhead = Math.round(150 * tvScale);
-    ['residential', 'commercial', 'review'].forEach(function(cat){
-      var panel = board.querySelector('.group-panel[data-cat="' + cat + '"]');
-      if (!panel) return;
-      var scrollEl = panel.querySelector('.job-table-scroll');
-      if (!scrollEl) return;
-      var hasEstDue = cat !== 'commercial';
-      var gapCount = hasEstDue ? 3 : 2;
-      var fixedColsWidth = COLUMN_MODE_FIXED_WIDTHS.priority + COLUMN_MODE_FIXED_WIDTHS.due + (hasEstDue ? COLUMN_MODE_FIXED_WIDTHS.estdue : 0);
-      var rowPadding = 36; // matches .job-row's left+right padding
-      var gaps = gapCount * 10;
-      var available = scrollEl.clientWidth - fixedColsWidth - rowPadding - gaps;
-      var nameWidth = Math.max(120 + nonTextOverhead, Math.floor(available));
-      panel.style.setProperty('--col-name-fit', nameWidth + 'px');
-    });
-  }
-
-  function scheduleColumnModeFit(){
-    requestAnimationFrame(fitColumnModeNames);
-  }
 
   function talkAddJob(jobType){
     console.log('[wizard] talkAddJob started, presetType:', jobType || '(none)');
@@ -4843,11 +4741,7 @@
     var chev = document.getElementById('chev-' + cat);
     if (body) body.classList.toggle('collapsed', collapsedGroups[cat]);
     if (chev) chev.classList.toggle('collapsed', collapsedGroups[cat]);
-    if (document.body.classList.contains('tv-mode')){
-      scheduleTvFit();
-      var board = document.getElementById('board');
-      if (board && board.classList.contains('column-mode')) scheduleColumnModeFit();
-    }
+    if (document.body.classList.contains('tv-mode')) scheduleTvFit();
   }
 
   // Moves a job up or down within its own table — only meaningful within
@@ -5659,10 +5553,7 @@
     document.getElementById('completed-label').textContent =
       completedCount + (completedCount === 1 ? ' job submitted' : ' jobs submitted');
 
-    if (document.body.classList.contains('tv-mode')){
-      scheduleTvFit();
-      if (document.getElementById('board').classList.contains('column-mode')) scheduleColumnModeFit();
-    }
+    if (document.body.classList.contains('tv-mode')) scheduleTvFit();
   }
 
   // Expose the small API used by inline handlers
