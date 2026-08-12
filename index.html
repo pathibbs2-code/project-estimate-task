@@ -4391,30 +4391,50 @@
     if (!document.body.classList.contains('tv-mode')) return;
     var board = document.getElementById('board');
     var header = document.querySelector('.app-header');
-    if (!board || !header) return;
+    var appEl = document.querySelector('.app');
+    if (!board || !header || !appEl) return;
     var root = document.documentElement;
     var prevScale = getComputedStyle(root).getPropertyValue('--tv-scale').trim() || '1';
+
+    function measureAvailable(){
+      var appStyle = getComputedStyle(appEl);
+      var appPad = (parseFloat(appStyle.paddingTop) || 0) + (parseFloat(appStyle.paddingBottom) || 0);
+      var headerHeight = header.getBoundingClientRect().height;
+      var headerMarginBottom = parseFloat(getComputedStyle(header).marginBottom) || 0;
+      return window.innerHeight - appPad - headerHeight - headerMarginBottom;
+    }
+
     // Measuring at natural (1x) scale and applying the real target scale
     // both happen here with nothing async in between (no
     // requestAnimationFrame, no setTimeout) — the browser only paints
     // once the whole function returns, so it only ever shows the final
-    // result, never this intermediate reset. This also measures the
-    // ACTUAL natural height directly instead of mathematically inferring
-    // it from the currently-scaled height, which could drift slightly
-    // off with each repeated call.
+    // result, never this intermediate reset.
     root.style.setProperty('--tv-scale', '1');
-    var headerHeight = header.getBoundingClientRect().height;
-    var appVerticalPadding = 80; // matches .app's top+bottom padding
-    var availableHeight = window.innerHeight - headerHeight - appVerticalPadding;
+    var availableHeight = measureAvailable();
     var naturalHeight = board.scrollHeight;
     if (naturalHeight <= 0 || availableHeight <= 0){
       root.style.setProperty('--tv-scale', prevScale);
       return;
     }
-    var scale = availableHeight / naturalHeight;
-    scale = Math.max(0.55, Math.min(scale, 3.2)); // never microscopic, but allowed to get genuinely large when there's only a few jobs to show
+    var scale = Math.max(0.55, Math.min(availableHeight / naturalHeight, 3.2));
     root.style.setProperty('--tv-scale', scale.toFixed(3));
-    console.log('[tv-fit] window.innerHeight:', window.innerHeight, '| headerHeight:', headerHeight.toFixed(0), '| availableHeight:', availableHeight.toFixed(0), '| naturalHeight:', naturalHeight, '| scale:', scale.toFixed(3));
+
+    // Refinement pass: text wrapping doesn't scale perfectly linearly
+    // (something that fit on one line at 1x can wrap to two lines at a
+    // much larger size), so check the REAL height this scale actually
+    // produced and correct toward the true target if it's meaningfully
+    // off, instead of trusting the first estimate blindly.
+    var actualHeight = board.scrollHeight;
+    var actualAvailable = measureAvailable();
+    if (actualHeight > 0){
+      var correctedScale = Math.max(0.55, Math.min(scale * (actualAvailable / actualHeight), 3.2));
+      if (Math.abs(correctedScale - scale) > 0.03){
+        scale = correctedScale;
+        root.style.setProperty('--tv-scale', scale.toFixed(3));
+      }
+    }
+
+    console.log('[tv-fit] window.innerHeight:', window.innerHeight, '| availableHeight:', availableHeight.toFixed(0), '| naturalHeight:', naturalHeight, '| finalScale:', scale.toFixed(3), '| resultingHeight:', board.scrollHeight);
   }
 
   window.addEventListener('resize', function(){
