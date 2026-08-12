@@ -537,7 +537,7 @@
     body.tv-mode .job-row{ font-size: 13px; padding: 12px 12px; }
     body.tv-mode .job-task-name{ font-size: 14px; }
     body.tv-mode h1{ font-size: 21px; }
-    .board.column-mode .group-panel{ flex-basis: 100% !important; }
+    .board.column-mode{ column-count: 1 !important; }
     .mobile-scroll-hint{
       display: block;
       font-size: 10.5px;
@@ -1715,34 +1715,41 @@
   body.tv-mode .overall-head span, body.tv-mode .overall-head b{ font-size: calc(15px * var(--tv-scale)); }
 
   /* ---------- Column View mode ----------
-     Puts Residential, Commercial, and Ryan Review side by side instead of
-     stacked, so all the jobs actively moving through the pipeline are
-     visible at once. Each column keeps its own independent horizontal
-     scroll for the columns that don't fit its narrower width (same
-     swipe-to-scroll behavior already used on mobile, just applied at any
-     width now). Job Submitted doesn't belong in that side-by-side
-     comparison — jobs land there once they're done, not "in progress" —
-     so it drops to its own full-width row underneath and stays collapsed
-     by default. */
+     Puts Residential, Commercial, and Ryan Review in a masonry-style
+     layout instead of stacked — but NOT forced into three equal-width
+     columns, since that wastes huge amounts of space when one table has
+     11 jobs and another has 3. Instead this is a real 2-column flow:
+     browsers balance multi-column content by height while keeping DOM
+     order, so a short table naturally stacks underneath another short
+     one in the same column, and a tall table gets a column mostly to
+     itself. Each panel keeps its own independent horizontal scroll for
+     anything that doesn't fit (same swipe-to-scroll behavior already
+     used on mobile). Job Submitted doesn't belong in that comparison —
+     jobs land there once they're done, not "in progress" — so
+     column-span:all breaks it out to its own full-width row underneath,
+     and it stays collapsed by default. */
   .board.column-mode{
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    display: block;
+    column-count: 2;
+    column-gap: 16px;
     /* These are the same --col-* variables the tables already build their
        grid-template-columns from — overriding them here, at the narrower
        column-mode scope, is what actually makes Priority and the due-date
-       columns fit inside a third-of-the-screen panel instead of getting
+       columns fit inside a half-of-screen column instead of getting
        scrolled out of view like before. */
     --col-priority: 100px;
     --col-due: 145px;
     --col-estdue: 115px;
   }
   .board.column-mode .group-panel{
-    flex: 1 1 0;
-    min-width: 600px;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    width: 100%;
+    margin-bottom: 16px;
   }
   .board.column-mode .group-panel[data-cat="sentComplete"]{
-    flex: 1 1 100%;
+    column-span: all;
+    -webkit-column-span: all;
   }
 
   /* Side-by-side columns only need the essentials to scan at a glance:
@@ -1758,7 +1765,7 @@
   }
   .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
   .board.column-mode .group-panel[data-cat="residential"] .job-row{
-    grid-template-columns: minmax(180px, 1fr) var(--col-priority) var(--col-due) var(--col-estdue);
+    grid-template-columns: var(--col-name-fit, 220px) var(--col-priority) var(--col-due) var(--col-estdue);
   }
   .board.column-mode .group-panel[data-cat="residential"] .job-table-head,
   .board.column-mode .group-panel[data-cat="residential"] .job-row,
@@ -1776,7 +1783,7 @@
   }
   .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
   .board.column-mode .group-panel[data-cat="commercial"] .job-row{
-    grid-template-columns: minmax(180px, 1fr) var(--col-priority) var(--col-due);
+    grid-template-columns: var(--col-name-fit, 220px) var(--col-priority) var(--col-due);
   }
   .board.column-mode .group-panel[data-cat="commercial"] .job-table-head,
   .board.column-mode .group-panel[data-cat="commercial"] .job-row,
@@ -1793,7 +1800,7 @@
   }
   .board.column-mode .group-panel[data-cat="review"] .job-table-head,
   .board.column-mode .group-panel[data-cat="review"] .job-row{
-    grid-template-columns: minmax(180px, 1fr) var(--col-priority) var(--col-due) var(--col-estdue);
+    grid-template-columns: var(--col-name-fit, 220px) var(--col-priority) var(--col-due) var(--col-estdue);
   }
   .board.column-mode .group-panel[data-cat="review"] .job-table-head,
   .board.column-mode .group-panel[data-cat="review"] .job-row,
@@ -4296,6 +4303,7 @@
       document.documentElement.style.setProperty('--tv-scale', '1');
     } else {
       scheduleTvFit();
+      if (mode === 'sidebyside') scheduleColumnModeFit();
     }
   }
 
@@ -4345,8 +4353,43 @@
   }
 
   window.addEventListener('resize', function(){
-    if (document.body.classList.contains('tv-mode')) scheduleTvFit();
+    if (document.body.classList.contains('tv-mode')){
+      scheduleTvFit();
+      var board = document.getElementById('board');
+      if (board && board.classList.contains('column-mode')) scheduleColumnModeFit();
+    }
   });
+
+  // ---------- Side By Side column-width fit ----------
+  // CSS grid's 1fr tracks can behave unpredictably once nested inside a
+  // scrollable flex column like these panels are — rather than trust that
+  // to stretch the name column to fill the real leftover space, this
+  // measures each panel directly and sets an exact pixel width, so there
+  // is no ambiguity for the browser to get wrong.
+  var COLUMN_MODE_FIXED_WIDTHS = { priority: 100, due: 145, estdue: 115 };
+
+  function fitColumnModeNames(){
+    var board = document.getElementById('board');
+    if (!board || !board.classList.contains('column-mode')) return;
+    ['residential', 'commercial', 'review'].forEach(function(cat){
+      var panel = board.querySelector('.group-panel[data-cat="' + cat + '"]');
+      if (!panel) return;
+      var scrollEl = panel.querySelector('.job-table-scroll');
+      if (!scrollEl) return;
+      var hasEstDue = cat !== 'commercial';
+      var gapCount = hasEstDue ? 3 : 2;
+      var fixedColsWidth = COLUMN_MODE_FIXED_WIDTHS.priority + COLUMN_MODE_FIXED_WIDTHS.due + (hasEstDue ? COLUMN_MODE_FIXED_WIDTHS.estdue : 0);
+      var rowPadding = 36; // matches .job-row's left+right padding
+      var gaps = gapCount * 10;
+      var available = scrollEl.clientWidth - fixedColsWidth - rowPadding - gaps;
+      var nameWidth = Math.max(180, Math.floor(available));
+      panel.style.setProperty('--col-name-fit', nameWidth + 'px');
+    });
+  }
+
+  function scheduleColumnModeFit(){
+    requestAnimationFrame(fitColumnModeNames);
+  }
 
   function talkAddJob(jobType){
     console.log('[wizard] talkAddJob started, presetType:', jobType || '(none)');
@@ -5519,7 +5562,10 @@
     document.getElementById('completed-label').textContent =
       completedCount + (completedCount === 1 ? ' job submitted' : ' jobs submitted');
 
-    if (document.body.classList.contains('tv-mode')) scheduleTvFit();
+    if (document.body.classList.contains('tv-mode')){
+      scheduleTvFit();
+      if (document.getElementById('board').classList.contains('column-mode')) scheduleColumnModeFit();
+    }
   }
 
   // Expose the small API used by inline handlers
