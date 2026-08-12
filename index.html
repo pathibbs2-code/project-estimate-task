@@ -1708,6 +1708,18 @@
   body.tv-mode .voice-log-btn{ font-size: calc(14px * var(--tv-scale)); padding: calc(8px * var(--tv-scale)) calc(14px * var(--tv-scale)); }
   body.tv-mode .owner-avatar{ width: calc(36px * var(--tv-scale)); height: calc(36px * var(--tv-scale)); font-size: calc(15px * var(--tv-scale)); }
   body.tv-mode .job-icon-btn{ width: calc(27px * var(--tv-scale)); height: calc(27px * var(--tv-scale)); font-size: calc(13px * var(--tv-scale)); }
+  body.tv-mode .job-icon-plus{
+    bottom: calc(-4px * var(--tv-scale)); right: calc(-4px * var(--tv-scale));
+    width: calc(13px * var(--tv-scale)); height: calc(13px * var(--tv-scale));
+    font-size: calc(9px * var(--tv-scale)); line-height: calc(12px * var(--tv-scale));
+  }
+  body.tv-mode .job-icon-count{
+    top: calc(-5px * var(--tv-scale)); right: calc(-5px * var(--tv-scale));
+    min-width: calc(14px * var(--tv-scale)); height: calc(14px * var(--tv-scale));
+    font-size: calc(9px * var(--tv-scale)); line-height: calc(14px * var(--tv-scale));
+  }
+  body.tv-mode .job-name-icons{ gap: calc(8px * var(--tv-scale)); padding-left: calc(6px * var(--tv-scale)); }
+  body.tv-mode .job-name-divider{ height: calc(22px * var(--tv-scale)); margin-right: calc(2px * var(--tv-scale)); }
   body.tv-mode .group-title{ font-size: calc(20px * var(--tv-scale)); }
   body.tv-mode .badge-count{ font-size: calc(16px * var(--tv-scale)); }
   body.tv-mode .due-flag{ font-size: calc(14px * var(--tv-scale)); }
@@ -4337,19 +4349,20 @@
     var board = document.getElementById('board');
     var header = document.querySelector('.app-header');
     if (!board || !header) return;
-    // Measure at natural (1x) scale first so the math reflects real
-    // content, not whatever scale happened to be set before.
-    document.documentElement.style.setProperty('--tv-scale', '1');
-    requestAnimationFrame(function(){
-      var headerHeight = header.getBoundingClientRect().height;
-      var appVerticalPadding = 80; // matches .app's top+bottom padding
-      var availableHeight = window.innerHeight - headerHeight - appVerticalPadding;
-      var neededHeight = board.scrollHeight;
-      if (neededHeight <= 0 || availableHeight <= 0) return;
-      var scale = availableHeight / neededHeight;
-      scale = Math.max(0.55, Math.min(scale, 1.6)); // never microscopic, never absurd
-      document.documentElement.style.setProperty('--tv-scale', scale.toFixed(3));
-    });
+    var currentScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tv-scale')) || 1;
+    var headerHeight = header.getBoundingClientRect().height;
+    var appVerticalPadding = 80; // matches .app's top+bottom padding
+    var availableHeight = window.innerHeight - headerHeight - appVerticalPadding;
+    // board.scrollHeight reflects content at the CURRENT scale — dividing
+    // by that scale backs out what the natural (1x) height would be,
+    // without ever having to actually set the scale to 1 and cause a
+    // visible shrink-then-jump flash to do the measurement.
+    var naturalHeight = board.scrollHeight / currentScale;
+    if (naturalHeight <= 0 || availableHeight <= 0) return;
+    var scale = availableHeight / naturalHeight;
+    scale = Math.max(0.55, Math.min(scale, 1.6)); // never microscopic, never absurd
+    if (Math.abs(scale - currentScale) < 0.01) return; // near-identical — skip to avoid pointless repaints
+    document.documentElement.style.setProperty('--tv-scale', scale.toFixed(3));
   }
 
   window.addEventListener('resize', function(){
