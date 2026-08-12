@@ -1700,8 +1700,8 @@
      sizes below, calibrated for a 1920x1080 screen; JS adjusts it up or
      down from there. */
   :root{ --tv-scale: 1; }
-  body.tv-mode .job-table-head{ font-size: calc(15px * var(--tv-scale)); padding: calc(14px * var(--tv-scale)) calc(18px * var(--tv-scale)); }
-  body.tv-mode .job-row{ font-size: calc(17px * var(--tv-scale)); padding: calc(18px * var(--tv-scale)) calc(18px * var(--tv-scale)); }
+  body.tv-mode .job-table-head{ font-size: calc(15px * var(--tv-scale)); padding: calc(6px * var(--tv-scale)) calc(18px * var(--tv-scale)); }
+  body.tv-mode .job-row{ font-size: calc(17px * var(--tv-scale)); padding: calc(8px * var(--tv-scale)) calc(18px * var(--tv-scale)); }
   body.tv-mode .job-task-name{ font-size: calc(19px * var(--tv-scale)); }
   body.tv-mode .job-task-sub{ font-size: calc(14px * var(--tv-scale)); }
   body.tv-mode .row-quick-select,
@@ -1749,6 +1749,7 @@
   }
   body.tv-mode .board:not(.column-mode) .group-header{
     border-radius: 0;
+    padding: calc(6px * var(--tv-scale)) calc(16px * var(--tv-scale));
   }
 
   /* ---------- Column View mode ----------
@@ -4381,20 +4382,29 @@
     var board = document.getElementById('board');
     var header = document.querySelector('.app-header');
     if (!board || !header) return;
-    var currentScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tv-scale')) || 1;
+    var root = document.documentElement;
+    var prevScale = getComputedStyle(root).getPropertyValue('--tv-scale').trim() || '1';
+    // Measuring at natural (1x) scale and applying the real target scale
+    // both happen here with nothing async in between (no
+    // requestAnimationFrame, no setTimeout) — the browser only paints
+    // once the whole function returns, so it only ever shows the final
+    // result, never this intermediate reset. This also measures the
+    // ACTUAL natural height directly instead of mathematically inferring
+    // it from the currently-scaled height, which could drift slightly
+    // off with each repeated call.
+    root.style.setProperty('--tv-scale', '1');
     var headerHeight = header.getBoundingClientRect().height;
     var appVerticalPadding = 80; // matches .app's top+bottom padding
     var availableHeight = window.innerHeight - headerHeight - appVerticalPadding;
-    // board.scrollHeight reflects content at the CURRENT scale — dividing
-    // by that scale backs out what the natural (1x) height would be,
-    // without ever having to actually set the scale to 1 and cause a
-    // visible shrink-then-jump flash to do the measurement.
-    var naturalHeight = board.scrollHeight / currentScale;
-    if (naturalHeight <= 0 || availableHeight <= 0) return;
+    var naturalHeight = board.scrollHeight;
+    if (naturalHeight <= 0 || availableHeight <= 0){
+      root.style.setProperty('--tv-scale', prevScale);
+      return;
+    }
     var scale = availableHeight / naturalHeight;
     scale = Math.max(0.55, Math.min(scale, 3.2)); // never microscopic, but allowed to get genuinely large when there's only a few jobs to show
-    if (Math.abs(scale - currentScale) < 0.02) return; // near-identical — skip to avoid pointless repaints
-    document.documentElement.style.setProperty('--tv-scale', scale.toFixed(3));
+    root.style.setProperty('--tv-scale', scale.toFixed(3));
+    console.log('[tv-fit] window.innerHeight:', window.innerHeight, '| headerHeight:', headerHeight.toFixed(0), '| availableHeight:', availableHeight.toFixed(0), '| naturalHeight:', naturalHeight, '| scale:', scale.toFixed(3));
   }
 
   window.addEventListener('resize', function(){
@@ -4803,6 +4813,11 @@
     var chev = document.getElementById('chev-' + cat);
     if (body) body.classList.toggle('collapsed', collapsedGroups[cat]);
     if (chev) chev.classList.toggle('collapsed', collapsedGroups[cat]);
+    if (document.body.classList.contains('tv-mode')){
+      scheduleTvFit();
+      var board = document.getElementById('board');
+      if (board && board.classList.contains('column-mode')) scheduleColumnModeFit();
+    }
   }
 
   // Moves a job up or down within its own table — only meaningful within
